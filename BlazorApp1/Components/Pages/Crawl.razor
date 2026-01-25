@@ -1,0 +1,11 @@
+﻿@page "/crawl"
+@inject Services.CrawlService CrawlService
+<h3>Crawl</h3>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await CrawlService.RunAsync();
+         base.OnInitializedAsync();
+    }
+}

@@ -1,0 +1,272 @@
+﻿@page "/counter"
+@using System.Text.RegularExpressions;
+@using System.Text.Json;
+@using System.Threading.Tasks
+@rendermode InteractiveServer
+@inject Services.CrawlService CrawlService
+@inject IJSRuntime JS
+<PageTitle>Matches</PageTitle>
+
+<h1>All Matches</h1>
+
+<button class="btn btn-primary" @onclick="today">Today</button>
+<button class="btn btn-primary" @onclick="yesterday">YesterDay</button>
+<button class="btn btn-primary" @onclick="tommorrow">Tommorow</button>
+<button class="btn btn-success" @onclick="today">Refresh</button>
+
+<input type="date"
+       style="padding:10px 12px;border-radius:8px;border:1px solid #d0d5dd;font-size:14px;width:260px"
+       @bind="SelectedDate"
+       @bind:format="yyyy-MM-dd" />
+<button class="btn btn-success" @onclick="searchforday">
+    Search With Particular Date
+</button>
+
+
+@* TODAY *@
+@if (Today)
+{
+    <h1>Today</h1>
+    @foreach (var partition in Partitiones)
+    {
+        <div class="card-body">
+            <h2>@partition.PartitionName</h2>
+            <table class="table table-sm table-striped mb-0">
+                <thead>
+                    <tr>
+                        <th>Home</th>
+                        <th>Score</th>
+                        <th>Away</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                    @foreach (var match in @partition.Matchs)
+                    {
+                        <tr>
+                            <td><img src="@match.HomeLogo" width="50" height="50" /><strong>@match.HomeTeamName</strong>  </td>
+                            <td><strong>@match.HomeScore : @match.AwayScore</strong> </td>
+                            <td><img src="@match.AwayLogo" width="50" height="50" /><strong>@match.AwayTeamName</strong></td>
+                            <td class="text-muted small">@match.Date</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+
+}
+
+@* TOMORROW *@
+
+@if (Tommorrow)
+{
+    <h1>Tommorrow</h1>
+
+
+    @foreach (var partition in TPartitiones)
+    {
+        <div class="card-body">
+            <table class="table table-sm table-striped mb-0">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>Home</th>
+                        <th>Score</th>
+                        <th>Away</th>
+                        <th></th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <h3>@partition.PartitionName</h3>
+                    @foreach (var match in @partition.Matchs)
+                    {
+                        <tr>
+                            <td><img src="@match.HomeLogo" width="50" height="50" /></td>
+                            <td><strong>@match.HomeTeamName</strong>  </td>
+                            <td><strong>@match.HomeScore : @match.AwayScore</strong> </td>
+                            <td><strong>@match.AwayTeamName</strong> </td>
+                            <td> <img src="@match.AwayLogo" width="50" height="50" /></td>
+                            <td class="text-muted small">@match.Date</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+}
+
+
+
+@* YESTERDAY *@
+@if (YesterDay)
+{
+    <h1>Yesterday</h1>
+
+    @foreach (var partition in YPartitiones)
+    {
+        <div class="card-body">
+            <table class="table table-sm table-striped mb-0">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>Home</th>
+                        <th>Score</th>
+                        <th>Away</th>
+                        <th></th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <h3>@partition.PartitionName</h3>
+                    @foreach (var match in @partition.Matchs)
+                    {
+                        <tr>
+                            <td><img src="@match.HomeLogo" width="50" height="50" /></td>
+                            <td><strong>@match.HomeTeamName</strong>  </td>
+                            <td><strong>@match.HomeScore : @match.AwayScore</strong> </td>
+                            <td><strong>@match.AwayTeamName</strong> </td>
+                            <td> <img src="@match.AwayLogo" width="50" height="50" /></td>
+                            <td class="text-muted small">@match.Date</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+}
+@* Particular Day *@
+@if (Pday)
+{
+    <h1>your Day</h1>
+
+    @foreach (var partition in PPartitiones)
+    {
+        <div class="card-body">
+            <table class="table table-sm table-striped mb-0">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>Home</th>
+                        <th>Score</th>
+                        <th>Away</th>
+                        <th></th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <h3>@partition.PartitionName</h3>
+                    @foreach (var match in @partition.Matchs)
+                    {
+                        <tr>
+                            <td><img src="@match.HomeLogo" width="50" height="50" /></td>
+                            <td><strong>@match.HomeTeamName</strong>  </td>
+                            <td><strong>@match.HomeScore : @match.AwayScore</strong> </td>
+                            <td><strong>@match.AwayTeamName</strong> </td>
+                            <td> <img src="@match.AwayLogo" width="50" height="50" /></td>
+                            <td class="text-muted small">@match.Date</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+}
+
+
+
+
+
+@code {
+    private int currentCount = 0;
+    [Parameter]
+    public List<Models.Partition> Partitiones { get; set; } = new List<Models.Partition>();
+    public List<Models.Partition> YPartitiones { get; set; } = new List<Models.Partition>();
+    public List<Models.Partition> TPartitiones { get; set; } = new List<Models.Partition>();
+    public List<Models.Partition> PPartitiones { get; set; } = new List<Models.Partition>();
+    public bool Today;
+    public bool YesterDay;
+    public bool Tommorrow;
+    public bool Pday;
+    private DateTime SelectedDate = DateTime.Now;
+
+    private string FormattedDate =>
+        SelectedDate.ToString("yyyy-MM-dd");
+    protected override async Task OnInitializedAsync()
+    {
+        string todaydate = DateTime.Now.ToString("yyyy-MM-dd");
+        string tommorrowdate = DateTime.Now.ToString("yyyy-MM-dd");
+        string yesterdaydate = DateTime.Now.ToString("yyyy-MM-dd");
+        Partitiones = await CrawlService.RunSearchDayAsync(todaydate);
+        TPartitiones = await CrawlService.RunSearchDayAsync(tommorrowdate);
+        YPartitiones = await CrawlService.RunSearchDayAsync(yesterdaydate);
+        Today = true;
+        YesterDay = false;
+        Tommorrow = false;
+        Pday = false;
+
+
+    }
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        return base.OnAfterRenderAsync(firstRender);
+    }
+
+    private void IncrementCount()
+    {
+        currentCount++;
+    }
+    public DateTime ToDateTime(string dotNetDate)
+    {
+        if (string.IsNullOrEmpty(dotNetDate))
+            return DateTime.MinValue;
+
+        var match = Regex.Match(dotNetDate, @"\d+");
+        if (!match.Success)
+            return DateTime.MinValue;
+
+        long ms = long.Parse(match.Value);
+        return DateTimeOffset
+            .FromUnixTimeMilliseconds(ms)
+            .LocalDateTime;
+    }
+    public async Task tommorrow()
+    {
+        Tommorrow = true;
+        YesterDay = false;
+        Pday = false; ;
+        Today = false;
+    }
+    public async Task yesterday()
+    {
+        Tommorrow = false;
+        YesterDay = true;
+        Pday = false;
+        Today = false;
+
+    }
+    public async Task today()
+    {
+        Tommorrow = false;
+        YesterDay = false;
+        Pday = true;
+        Today = true;
+
+    }
+    public async Task searchforday()
+    {
+        PPartitiones = await CrawlService.RunSearchDayAsync(FormattedDate);
+        Tommorrow = false;
+        YesterDay = false;
+        Today = false;
+        Pday = true;
+    }
+
+
+}
