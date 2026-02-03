@@ -14,6 +14,7 @@ builder.Services.AddScoped<ISpeechToTextService, SpeechToTextService>();
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+builder.Services.AddScoped<YouTubeDownloadService>();
 
 
 var app = builder.Build();

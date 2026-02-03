@@ -26,11 +26,22 @@
 @* TODAY *@
 @if (Today)
 {
+
     <h1>Today</h1>
-    @foreach (var partition in Partitiones)
+    <select class="form-select mb-2" @bind="SelectedTodayPartition">
+        <option value="">All</option>
+        @foreach (var p in Partitiones)
+        {
+            <option value="@p.PartitionName">@p.PartitionName</option>
+        }
+    </select>
+        @foreach (var partition in Partitiones
+            .Where(p => string.IsNullOrEmpty(SelectedTodayPartition)
+            || p.PartitionName == SelectedTodayPartition))
     {
+
         <div class="card-body">
-            <h2>@partition.PartitionName</h2>
+            <h2 style="background-color:antiquewhite">@partition.PartitionName</h2>
             <table class="table table-sm table-striped mb-0">
                 <thead>
                     <tr>
@@ -55,6 +66,7 @@
             </table>
         </div>
     }
+    
 
 
 }
@@ -64,11 +76,19 @@
 @if (Tommorrow)
 {
     <h1>Tommorrow</h1>
-
-
-    @foreach (var partition in TPartitiones)
+    <select class="form-select mb-2" @bind="SelectedTomorrowPartition">
+        <option value="">All</option>
+        @foreach (var p in TPartitiones)
+        {
+            <option value="@p.PartitionName">@p.PartitionName</option>
+        }
+    </select>
+    @foreach (var partition in TPartitiones
+                .Where(p => string.IsNullOrEmpty(SelectedTomorrowPartition)
+                    || p.PartitionName == SelectedTomorrowPartition))
     {
         <div class="card-body">
+            <h3>@partition.PartitionName</h3>
             <table class="table table-sm table-striped mb-0">
                 <thead>
                     <tr>
@@ -81,7 +101,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <h3>@partition.PartitionName</h3>
+
                     @foreach (var match in @partition.Matchs)
                     {
                         <tr>
@@ -103,11 +123,20 @@
 
 
 @* YESTERDAY *@
+
 @if (YesterDay)
 {
     <h1>Yesterday</h1>
-
-    @foreach (var partition in YPartitiones)
+    <select class="form-select mb-2" @bind="SelectedYesterdayPartition">
+        <option value="">All</option>
+        @foreach (var p in YPartitiones)
+        {
+            <option value="@p.PartitionName">@p.PartitionName</option>
+        }
+    </select>
+    @foreach (var partition in YPartitiones
+                   .Where(p => string.IsNullOrEmpty(SelectedYesterdayPartition)
+                   || p.PartitionName == SelectedYesterdayPartition))
     {
         <div class="card-body">
             <table class="table table-sm table-striped mb-0">
@@ -138,16 +167,26 @@
             </table>
         </div>
     }
-
 }
 @* Particular Day *@
+
 @if (Pday)
 {
     <h1>your Day</h1>
-
-    @foreach (var partition in PPartitiones)
+    <select class="form-select mb-2" @bind="SelectedParticularPartition">
+        <option value="">All</option>
+        @foreach (var p in PPartitiones)
+        {
+            <option value="@p.PartitionName">@p.PartitionName</option>
+        }
+    </select>
+    @foreach (var partition in PPartitiones
+                   .Where(p => string.IsNullOrEmpty(SelectedParticularPartition)
+                   || p.PartitionName == SelectedParticularPartition))
     {
         <div class="card-body">
+            <h3>@partition.PartitionName</h3>
+
             <table class="table table-sm table-striped mb-0">
                 <thead>
                     <tr>
@@ -160,7 +199,6 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <h3>@partition.PartitionName</h3>
                     @foreach (var match in @partition.Matchs)
                     {
                         <tr>
@@ -190,6 +228,10 @@
     public List<Models.Partition> YPartitiones { get; set; } = new List<Models.Partition>();
     public List<Models.Partition> TPartitiones { get; set; } = new List<Models.Partition>();
     public List<Models.Partition> PPartitiones { get; set; } = new List<Models.Partition>();
+    private string? SelectedTodayPartition;
+    private string? SelectedYesterdayPartition;
+    private string? SelectedTomorrowPartition;
+    private string? SelectedParticularPartition;
     public bool Today;
     public bool YesterDay;
     public bool Tommorrow;
@@ -201,8 +243,8 @@
     protected override async Task OnInitializedAsync()
     {
         string todaydate = DateTime.Now.ToString("yyyy-MM-dd");
-        string tommorrowdate = DateTime.Now.ToString("yyyy-MM-dd");
-        string yesterdaydate = DateTime.Now.ToString("yyyy-MM-dd");
+        string tommorrowdate = DateTime.Now.AddDays(1).ToString("yyyy-MM-dd");
+        string yesterdaydate = DateTime.Now.AddDays(-1).ToString("yyyy-MM-dd");
         Partitiones = await CrawlService.RunSearchDayAsync(todaydate);
         TPartitiones = await CrawlService.RunSearchDayAsync(tommorrowdate);
         YPartitiones = await CrawlService.RunSearchDayAsync(yesterdaydate);
@@ -255,7 +297,7 @@
     {
         Tommorrow = false;
         YesterDay = false;
-        Pday = true;
+        Pday = false;
         Today = true;
 
     }

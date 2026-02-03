@@ -1,0 +1,136 @@
+﻿@page "/youtube-downloader"
+@inject Crawl.Services.YouTubeDownloadService Downloader
+
+<h3>YouTube Shorts Video Downloader</h3>
+
+<div class="card p-4 shadow-sm" style="max-width:500px;">
+    <div class="mb-3">
+        <label class="form-label">YouTube URL:</label>
+        <input class="form-control" @bind="videoUrl" placeholder="Paste YouTube link..." />
+    </div>
+
+    <div class="mb-3">
+        <button class="btn btn-primary me-2" @onclick="LoadQualities" disabled="@isLoading">
+            @if (isLoading)
+            {
+                <span class="spinner-border spinner-border-sm"></span>
+            }
+            Load Qualities
+        </button>
+    </div>
+
+    @if (qualities?.Any() == true)
+    {
+        <div class="mb-3">
+            <label class="form-label">Select Quality:</label>
+            <select class="form-select" @bind="selectedQuality">
+                @foreach (var q in qualities)
+                {
+                    <option value="@q">@q</option>
+                }
+            </select>
+        </div>
+
+        <button class="btn btn-success mb-3" @onclick="DownloadVideo" disabled="@isDownloading">
+            @if (isDownloading)
+            {
+                <span class="spinner-border spinner-border-sm"></span>
+            }
+            Download
+        </button>
+
+        @if (isDownloading)
+        {
+            <div class="progress mb-2" style="height:20px;">
+                <div class="progress-bar" role="progressbar" style="width:@progressValue%" aria-valuenow="@progressValue" aria-valuemin="0" aria-valuemax="100">
+                    @progressValue%
+                </div>
+            </div>
+        }
+    }
+
+    @if (!string.IsNullOrEmpty(statusMessage))
+    {
+        <div class="alert alert-info mt-2">@statusMessage</div>
+    }
+</div>
+
+@code {
+    private string videoUrl = string.Empty;
+    private List<string> qualities = new();
+    private string selectedQuality = string.Empty;
+
+    private bool isLoading = false;
+    private bool isDownloading = false;
+    private int progressValue = 0;
+    private string statusMessage = string.Empty;
+
+    private async Task LoadQualities()
+    {
+        if (string.IsNullOrWhiteSpace(videoUrl))
+        {
+            statusMessage = "Please enter a valid YouTube URL.";
+            return;
+        }
+
+        try
+        {
+            isLoading = true;
+            statusMessage = "Loading qualities...";
+            qualities = await Downloader.GetAvailableQualitiesAsync(videoUrl);
+
+            if (qualities.Any())
+                selectedQuality = qualities.First();
+
+            statusMessage = "Qualities loaded successfully.";
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"Error loading qualities: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task DownloadVideo()
+    {
+        if (string.IsNullOrEmpty(selectedQuality))
+        {
+            statusMessage = "Please select a quality first.";
+            return;
+        }
+
+        isDownloading = true;
+        progressValue = 0;
+        statusMessage = "Starting download...";
+
+        var progress = new Progress<double>(p =>
+        {
+            progressValue = (int)(p * 100);
+            InvokeAsync(StateHasChanged);
+        });
+
+        try
+        {
+            var downloadPath = "C:\\downloads"; // adjust as needed
+            var filePath = await Downloader.DownloadAsync(
+                videoUrl,
+                selectedQuality,
+                downloadPath,
+                progress);
+
+            statusMessage = $"Download complete: {filePath}";
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"Download failed: {ex.Message}";
+        }
+        finally
+        {
+            isDownloading = false;
+            progressValue = 0;
+        }
+    }
+}
