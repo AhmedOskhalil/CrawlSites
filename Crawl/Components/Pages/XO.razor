@@ -1,0 +1,160 @@
+﻿@page "/xo"
+
+<div class="xo-container">
+
+    <h1 class="title">⭕ Tic Tac Toe ❌</h1>
+
+    <div class="status">
+        @StatusMessage
+    </div>
+
+    <div class="board">
+        @for (int i = 0; i < 9; i++)
+        {
+            var index = i;
+
+            <button class="cell"
+                    @onclick="() => Play(index)">
+                @Board[index]
+            </button>
+        }
+    </div>
+    <button class="restart" @onclick="Restart">
+        🔄 Restart Game
+    </button>
+
+</div>
+
+<style>
+
+    .xo-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 40px;
+        font-family: Arial;
+    }
+
+    .title {
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+
+    .status {
+        font-size: 20px;
+        font-weight: 600;
+        margin-bottom: 20px;
+        padding: 10px 20px;
+        border-radius: 10px;
+        background: #f3f4f6;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    .board {
+        display: grid;
+        grid-template-columns: repeat(3, 100px);
+        grid-template-rows: repeat(3, 100px);
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .cell {
+        font-size: 40px;
+        font-weight: bold;
+        border: none;
+        border-radius: 15px;
+        background: white;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+        .cell:hover {
+            background: #e5e7eb;
+            transform: scale(1.05);
+        }
+
+    .restart {
+        padding: 10px 25px;
+        font-size: 16px;
+        font-weight: 600;
+        border: none;
+        border-radius: 10px;
+        background: #2563eb;
+        color: white;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+        .restart:hover {
+            background: #1d4ed8;
+            transform: scale(1.05);
+        }
+
+</style>
+
+@code {
+
+    string[] Board = new string[9];
+    bool XTurn = true;
+    bool GameOver = false;
+    string StatusMessage = "Player X's Turn";
+
+    int[][] Wins = new int[][]
+    {
+        new[]{0,1,2},
+        new[]{3,4,5},
+        new[]{6,7,8},
+        new[]{0,3,6},
+        new[]{1,4,7},
+        new[]{2,5,8},
+        new[]{0,4,8},
+        new[]{2,4,6}
+    };
+
+    void Play(int index)
+    {
+        if (GameOver || !string.IsNullOrEmpty(Board[index]))
+            return;
+
+        Board[index] = XTurn ? "X" : "O";
+
+        if (CheckWinner())
+            return;
+
+        if (Board.All(c => !string.IsNullOrEmpty(c)))
+        {
+            StatusMessage = "🤝 It's a Draw!";
+            GameOver = true;
+            return;
+        }
+
+        XTurn = !XTurn;
+        StatusMessage = $"Player {(XTurn ? "X" : "O")}'s Turn";
+    }
+
+    bool CheckWinner()
+    {
+        foreach (var w in Wins)
+        {
+            if (!string.IsNullOrEmpty(Board[w[0]]) &&
+                Board[w[0]] == Board[w[1]] &&
+                Board[w[1]] == Board[w[2]])
+            {
+                StatusMessage = $"🎉 Player {Board[w[0]]} Wins!";
+                GameOver = true;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    void Restart()
+    {
+        Board = new string[9];
+        XTurn = true;
+        GameOver = false;
+        StatusMessage = "Player X's Turn";
+    }
+}
