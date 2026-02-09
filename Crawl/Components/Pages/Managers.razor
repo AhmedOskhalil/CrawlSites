@@ -1,0 +1,70 @@
+﻿@page "/management/managers"
+@using Crawl.Data
+@inject AppDbContext db
+@using Microsoft.EntityFrameworkCore
+
+<h3>Managers</h3>
+<div class="input-group mb-3 w-50">
+    <input class="form-control" placeholder="Search..."
+           @bind="searchText" @bind:event="oninput" />
+    <button class="btn btn-secondary" @onclick="ClearSearch">Clear</button>
+</div>
+<table class="table table-hover shadow">
+    <thead class="table-dark">
+        <tr>
+            <th>Name</th>
+            <th>Email</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var m in managers)
+        {
+            <tr>
+                <td>@m.FullName</td>
+                <td>@m.Email</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    List<Employee> managers = new();
+    string _searchText = "";
+    public string searchText
+    {
+        get => _searchText;
+        set
+        {
+            _searchText = value; // reset to first page
+            Search(); // update filtered table
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadManagers();
+    }
+    public async Task LoadManagers()
+    {
+        managers = await db.Employees
+            .Where(e => db.Employees.Any(x => x.ManagerId == e.Id))
+            .ToListAsync();
+    }
+
+    void Search()
+    {
+        managers = managers
+            .Where(e => db.Employees.Any(x => x.ManagerId == e.Id) &&
+                        (string.IsNullOrWhiteSpace(searchText) ||
+                         e.FullName.Contains(searchText)))
+            .ToList();
+    }
+
+    void ClearSearch()
+    {
+        searchText = "";
+        this.LoadManagers();
+
+    }
+
+}

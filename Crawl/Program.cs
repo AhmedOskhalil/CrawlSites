@@ -1,9 +1,13 @@
 using Crawl.Components;
+using Crawl.Data;
 using Crawl.IServices;
 using Crawl.Services;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
-
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection")));
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -12,8 +16,6 @@ builder.Services.AddHttpClient();
 //builder.Services.AddScoped<SpeechToTextService>();
 builder.Services.AddScoped<ISpeechToTextService, SpeechToTextService>();
 
-builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents();
 builder.Services.AddScoped<YouTubeDownloadService>();
 
 

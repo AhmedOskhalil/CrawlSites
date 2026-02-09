@@ -1,0 +1,254 @@
+﻿@page "/management/employees"
+@inject AppDbContext db
+@using Microsoft.EntityFrameworkCore
+
+<h3 class="text-primary mb-3">Employees</h3>
+
+<!-- CREATE BUTTON -->
+<button class="btn btn-success mb-3" @onclick="()=>showCreate=true">
+    + Create Employee
+</button>
+
+<!-- SEARCH + CLEAR -->
+<div class="input-group mb-3 w-50">
+    <input class="form-control" placeholder="Search..."
+           @bind="searchText" @bind:event="oninput" />
+    <button class="btn btn-secondary" @onclick="ClearSearch">Clear</button>
+</div>
+
+<!-- EMPLOYEES TABLE -->
+<table class="table table-hover shadow">
+    <thead class="table-dark">
+        <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Department</th>
+            <th>Manager</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach(var e in paged)
+        {
+            <tr>
+                <td>@e.FullName</td>
+                <td>@e.Email</td>
+                <td>@e.Department?.Name</td>
+                <td>@e.Manager?.FullName</td>
+                <td>
+                    <button class="btn btn-warning btn-sm" @onclick="()=>OpenEdit(e)">Edit</button>
+                    <button class="btn btn-danger btn-sm ms-1" @onclick="()=>Delete(e.Id)">Delete</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<!-- PAGINATION -->
+<button class="btn btn-secondary btn-sm" @onclick="Prev">Prev</button>
+<span class="mx-2">Page @(page)</span>
+<button class="btn btn-secondary btn-sm" @onclick="Next">Next</button>
+
+<!-- CREATE POPUP -->
+@if(showCreate)
+{
+<div class="modal fade show d-block" style="background:rgba(0,0,0,.5)">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5>Create Employee</h5>
+            </div>
+            <div class="modal-body">
+                <input class="form-control mb-2" placeholder="Name" @bind="newEmp.FullName"/>
+                <input class="form-control mb-2" placeholder="Email" @bind="newEmp.Email"/>
+
+                <select class="form-select mb-2" @bind="newEmp.DepartmentId">
+                    <option value="">Select Department</option>
+                    @foreach(var d in departments){<option value="@d.Id">@d.Name</option>}
+                </select>
+
+                <select class="form-select" @bind="newEmp.ManagerId">
+                    <option value="">No Manager</option>
+                    @foreach(var m in managers){<option value="@m.Id">@m.FullName</option>}
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-success" @onclick="Add">Save</button>
+                <button class="btn btn-secondary" @onclick="CloseCreate">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+}
+
+<!-- EDIT POPUP -->
+@if(showEdit)
+{
+<div class="modal fade show d-block" style="background:rgba(0,0,0,.5)">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-white">
+                <h5>Edit Employee</h5>
+            </div>
+            <div class="modal-body">
+                <input class="form-control mb-2" placeholder="Name" @bind="editEmp.FullName"/>
+                <input class="form-control mb-2" placeholder="Email" @bind="editEmp.Email"/>
+
+                <select class="form-select mb-2" @bind="editEmp.DepartmentId">
+                    <option value="">Select Department</option>
+                    @foreach(var d in departments){<option value="@d.Id">@d.Name</option>}
+                </select>
+
+                <select class="form-select" @bind="editEmp.ManagerId">
+                    <option value="">No Manager</option>
+                    @foreach(var m in managers){<option value="@m.Id">@m.FullName</option>}
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-success" @onclick="SaveEdit">Save</button>
+                <button class="btn btn-secondary" @onclick="()=>showEdit=false">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+}
+
+@code {
+    List<Employee> all = new();
+    List<Employee> paged = new();
+    List<Employee> managers = new();
+    List<Department> departments = new();
+
+    Employee newEmp = new();
+    Employee editEmp = new();
+
+    bool showCreate = false;
+    bool showEdit = false;
+
+    string _searchText = "";
+    string searchText
+    {
+        get => _searchText;
+        set
+        {
+            _searchText = value;
+            page = 1;   // reset to first page
+            ApplyPaging(); // update filtered table
+        }
+    }
+    int page = 1;
+    int pageSize = 5;
+
+    protected override async Task OnInitializedAsync()
+    {
+        departments = await db.Departments.ToListAsync();
+        await Load();
+    }
+
+    async Task Load()
+    {
+        all = await db.Employees
+            .Include(x => x.Department)
+            .Include(x => x.Manager)
+            .ToListAsync();
+
+        managers = all;
+        ApplyPaging();
+    }
+
+    void ApplyPaging()
+    {
+        IEnumerable<Employee> source = all;
+
+        if (!string.IsNullOrWhiteSpace(searchText))
+        {
+            source = source.Where(x => x.FullName.Contains(searchText, StringComparison.OrdinalIgnoreCase));
+        }
+
+        paged = source.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+    }
+  
+
+    async Task Add()
+    {
+        db.Employees.Add(newEmp);
+        await db.SaveChangesAsync();
+        newEmp = new Employee();
+        showCreate = false;
+        await Load();
+    }
+
+    void CloseCreate()
+    {
+        showCreate = false;
+        newEmp = new Employee();
+    }
+
+    void OpenEdit(Employee e)
+    {
+        editEmp = new Employee
+        {
+            Id = e.Id,
+            FullName = e.FullName,
+            Email = e.Email,
+            DepartmentId = e.DepartmentId,
+            ManagerId = e.ManagerId
+        };
+        showEdit = true;
+    }
+
+    async Task SaveEdit()
+    {
+        var emp = await db.Employees.FindAsync(editEmp.Id);
+        if (emp != null)
+        {
+            emp.FullName = editEmp.FullName;
+            emp.Email = editEmp.Email;
+            emp.DepartmentId = editEmp.DepartmentId;
+            emp.ManagerId = editEmp.ManagerId;
+
+            await db.SaveChangesAsync();
+            showEdit = false;
+            await Load();
+        }
+    }
+
+    async Task Delete(int id)
+    {
+        var e = await db.Employees.FindAsync(id);
+        if (e != null)
+        {
+            db.Remove(e);
+            await db.SaveChangesAsync();
+            await Load();
+        }
+    }
+    void FilterEmployees()
+    {
+        if (string.IsNullOrWhiteSpace(searchText))
+        {
+            paged = all.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+        }
+        else
+        {
+            var filtered = all.Where(x => x.FullName.Contains(searchText, StringComparison.OrdinalIgnoreCase)).ToList();
+            paged = filtered.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+        }
+    }
+    // void Search()
+    // {
+    //     all = all.Where(x => x.FullName.Contains(searchText, StringComparison.OrdinalIgnoreCase)).ToList();
+    //     page = 1;
+    //     ApplyPaging();
+    // }
+
+    async Task ClearSearch()
+    {
+        searchText = "";
+        page = 1;
+        await Load();
+    }
+
+    void Next() { page++; ApplyPaging(); }
+    void Prev() { if (page > 1) page--; ApplyPaging(); }
+}

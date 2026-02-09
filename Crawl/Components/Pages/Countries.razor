@@ -1,0 +1,171 @@
+﻿@page "/management/countries"
+@inject AppDbContext db
+@using Microsoft.EntityFrameworkCore
+
+<h3 class="text-primary mb-3">Countries</h3>
+
+<button class="btn btn-success mb-3" @onclick="() => showCreate = true">
+    + Create Country
+</button>
+
+<div class="input-group mb-3 w-50">
+    <input class="form-control" placeholder="Search..."
+           @bind="searchText" @bind:event="oninput" />
+    <button class="btn btn-secondary" @onclick="ClearSearch">Clear</button>
+</div>
+
+<table class="table table-hover shadow ">
+    <thead class="table-dark">
+        <tr>
+            <th>Name</th>
+            <th width="150">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var c in paged)
+        {
+            <tr>
+                <td>@c.Name</td>
+                <td>
+                    <button class="btn btn-warning btn-sm"
+                            @onclick="() => OpenEdit(c)">
+                        Edit
+                    </button>
+                    <button class="btn btn-danger btn-sm ms-1"
+                            @onclick="() => Delete(c.Id)">
+                        Delete
+                    </button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<button class="btn btn-secondary btn-sm" @onclick="Prev">Prev</button>
+<span class="mx-2">Page @(page)</span>
+<button class="btn btn-secondary btn-sm" @onclick="Next">Next</button>
+
+@if (showCreate)
+{
+    <div class="modal fade show d-block" style="background:rgba(0,0,0,.5)">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white"><h5>Create</h5></div>
+                <div class="modal-body">
+                    <input class="form-control" @bind="newCountry.Name" />
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-success" @onclick="Add">Save</button>
+                    <button class="btn btn-secondary" @onclick="CloseCreate">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (showEdit)
+{
+    <div class="modal fade show d-block" style="background:rgba(0,0,0,.5)">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning"><h5>Edit</h5></div>
+                <div class="modal-body">
+                    <input class="form-control" @bind="editCountry.Name" />
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-success" @onclick="SaveEdit">Save</button>
+                    <button class="btn btn-secondary" @onclick="() => showEdit = false">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    List<Country> all = new();
+    List<Country> paged = new();
+
+    Country newCountry = new();
+    Country editCountry = new();
+
+    bool showCreate, showEdit;
+    string _searchText = "";
+    string searchText
+    {
+        get => _searchText;
+        set
+        {
+            _searchText = value;
+            page = 1;   // reset to first page
+            ApplyPaging(); // update filtered table
+        }
+    }
+
+    int page = 1;
+    int pageSize = 5;
+
+    protected override async Task OnInitializedAsync() => await Load();
+
+    async Task Load()
+    {
+        all = await db.Countries.ToListAsync();
+        ApplyPaging();
+    }
+    void ApplyPaging()
+    {
+        IEnumerable<Country> source = all;
+
+        if (!string.IsNullOrWhiteSpace(searchText))
+        {
+            source = source.Where(x => x.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase));
+        }
+
+        paged = source.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+    }
+
+    async Task Add()
+    {
+        db.Countries.Add(newCountry);
+        await db.SaveChangesAsync();
+        newCountry = new();
+        showCreate = false;
+        await Load();
+    }
+
+    void CloseCreate() { showCreate = false; newCountry = new(); }
+
+    void OpenEdit(Country c) { editCountry = c; showEdit = true; }
+
+    async Task SaveEdit()
+    {
+        await db.SaveChangesAsync();
+        showEdit = false;
+        await Load();
+    }
+
+    async Task Delete(int id)
+    {
+        var c = await db.Countries.FindAsync(id);
+        db.Remove(c);
+        await db.SaveChangesAsync();
+        await Load();
+    }
+
+    void Search()
+    {
+        all = all.Where(x => x.Name.Contains(searchText,
+            StringComparison.OrdinalIgnoreCase)).ToList();
+        page = 1;
+        ApplyPaging();
+    }
+
+    async Task ClearSearch()
+    {
+        searchText = "";
+        page = 1;
+        await Load();
+    }
+
+    void Next() { page++; ApplyPaging(); }
+    void Prev() { if (page > 1) page--; ApplyPaging(); }
+}

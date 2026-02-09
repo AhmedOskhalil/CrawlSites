@@ -8,38 +8,65 @@
 
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="nav flex-column">
+        <!-- Management section -->
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Management
             </NavLink>
         </div>
 
+        <div class="nav-item px-3 ms-3">
+            <NavLink class="nav-link" href="/management/countries">
+                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Countries
+            </NavLink>
+        </div>
+        <div class="nav-item px-3 ms-3">
+            <NavLink class="nav-link" href="/management/departments">
+                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Departments
+            </NavLink>
+        </div>
+        <div class="nav-item px-3 ms-3">
+            <NavLink class="nav-link" href="/management/employees">
+                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Employees
+            </NavLink>
+        </div>
+        <div class="nav-item px-3 ms-3">
+            <NavLink class="nav-link" href="/management/managers">
+                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Managers
+            </NavLink>
+        </div>
+
+        <hr class="mx-3 my-2" />
+
+        <!-- Other components section -->
         <div class="nav-item px-3">
+            <div class="nav-link text-muted" aria-hidden="true">Other Components</div>
+        </div>
+
+        <div class="nav-item px-3 ms-3">
             <NavLink class="nav-link" href="counter">
                 <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Matches
             </NavLink>
         </div>
-        <div class="nav-item px-3">
+        <div class="nav-item px-3 ms-3">
             <NavLink class="nav-link" href="youtube-downloader">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Youtube Downlaoder
+                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> YouTube Downloader
             </NavLink>
         </div>
-        <div class="nav-item px-3">
+        <div class="nav-item px-3 ms-3">
             <NavLink class="nav-link" href="getcontent">
                 <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> getcontent
             </NavLink>
         </div>
-        <div class="nav-item px-3">
+        <div class="nav-item px-3 ms-3">
             <NavLink class="nav-link" href="xo">
                 <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> XO
             </NavLink>
         </div>
-
-        <div class="nav-item px-3">
+        <div class="nav-item px-3 ms-3">
             <NavLink class="nav-link" href="weather">
                 <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
             </NavLink>
         </div>
     </nav>
 </div>
-

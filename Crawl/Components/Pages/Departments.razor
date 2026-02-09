@@ -1,0 +1,173 @@
+﻿@page "/management/departments"
+@inject AppDbContext db
+@using Microsoft.EntityFrameworkCore
+
+<h3 class="text-primary mb-3">Departments</h3>
+
+<button class="btn btn-success mb-3" @onclick="() => showCreate = true">
+    + Create Department
+</button>
+
+<div class="input-group mb-3 w-50">
+    <input class="form-control" placeholder="Search..."
+           @bind="searchText" @bind:event="oninput" />
+    <button class="btn btn-secondary" @onclick="ClearSearch">Clear</button>
+</div>
+
+<table class="table table-hover shadow">
+    <thead class="table-dark">
+        <tr><th>Name</th><th>Country</th><th></th></tr>
+    </thead>
+    <tbody>
+        @foreach (var d in paged)
+        {
+            <tr>
+                <td>@d.Name</td>
+                <td>@d.Country?.Name</td>
+                <td>
+                    <button class="btn btn-warning btn-sm" @onclick="() => OpenEdit(d)">Edit</button>
+                    <button class="btn btn-danger btn-sm" @onclick="() => Delete(d.Id)">Delete</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<button class="btn btn-secondary btn-sm" @onclick="Prev">Prev</button>
+<span class="mx-2">Page @(page)</span>
+<button class="btn btn-secondary btn-sm" @onclick="Next">Next</button>
+
+@if (showCreate)
+{
+    <div class="modal fade show d-block" style="background:rgba(0,0,0,.5)">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <input class="form-control mb-2" @bind="newDept.Name" />
+                    <select class="form-select" @bind="newDept.CountryId">
+                        @foreach (var c in countries)
+                        {
+                            <option value="@c.Id">@c.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-success" @onclick="Add">Save</button>
+                    <button class="btn btn-secondary" @onclick="CloseCreate">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (showEdit)
+{
+    <div class="modal fade show d-block" style="background:rgba(0,0,0,.5)">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <input class="form-control mb-2" @bind="editDept.Name" />
+                    <select class="form-select" @bind="editDept.CountryId">
+                        @foreach (var c in countries)
+                        {
+                            <option value="@c.Id">@c.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-success" @onclick="SaveEdit">Save</button>
+                    <button class="btn btn-secondary" @onclick="() => showEdit = false">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    List<Department> all = new();
+    List<Department> paged = new();
+    List<Country> countries = new();
+
+    Department newDept = new();
+    Department editDept = new();
+
+    bool showCreate, showEdit;
+    string _searchText = "";
+    string searchText
+    {
+        get => _searchText;
+        set
+        {
+            _searchText = value;
+            page = 1;   // reset to first page
+            ApplyPaging(); // update filtered table
+        }
+    }
+    int page = 1;
+    int pageSize = 5;
+
+    protected override async Task OnInitializedAsync()
+    {
+        countries = await db.Countries.ToListAsync();
+        await Load();
+    }
+
+    async Task Load()
+    {
+        all = await db.Departments.Include(x => x.Country).ToListAsync();
+        ApplyPaging();
+    }
+
+   
+    void ApplyPaging()
+    {
+        IEnumerable<Department> source = all;
+
+        if (!string.IsNullOrWhiteSpace(searchText))
+        {
+            source = source.Where(x => x.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase));
+        }
+
+        paged = source.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+    }
+
+    async Task Add()
+    {
+        db.Departments.Add(newDept);
+        await db.SaveChangesAsync();
+        newDept = new();
+        showCreate = false;
+        await Load();
+    }
+
+    void CloseCreate() { showCreate = false; newDept = new(); }
+
+    void OpenEdit(Department d) { editDept = d; showEdit = true; }
+
+    async Task SaveEdit() { await db.SaveChangesAsync(); showEdit = false; await Load(); }
+
+    async Task Delete(int id)
+    {
+        var d = await db.Departments.FindAsync(id);
+        db.Remove(d);
+        await db.SaveChangesAsync();
+        await Load();
+    }
+
+    void Search()
+    {
+        all = all.Where(x => x.Name.Contains(searchText,
+            StringComparison.OrdinalIgnoreCase)).ToList();
+        page = 1; ApplyPaging();
+    }
+
+    async Task ClearSearch()
+    {
+        searchText = "";
+        page = 1;
+        await Load();
+    }
+
+    void Next() { page++; ApplyPaging(); }
+    void Prev() { if (page > 1) page--; ApplyPaging(); }
+}
