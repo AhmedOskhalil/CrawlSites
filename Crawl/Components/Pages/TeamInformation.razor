@@ -1,0 +1,65 @@
+﻿@page "/team-information"
+@using Crawl.Services
+
+@inject TeamInformationGlobal TeamInformationGlobal
+
+@if (teamInformation == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <h3 style="text-align:center">@teamInformation.TeamName</h3>
+
+    <table class="table table-success shadow">
+        <thead class="table-hover" style="color:ActiveCaption">
+            <tr>
+                <th>Home</th>
+                <th>Result</th>
+                <th>Away</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var member in teamInformation.RecentMatches)
+            {
+                <tr>
+                    <td>@member.HomeTeamName</td>
+                    <td>@member.MatchResult</td>
+                    <td>@member.AwayTeamName</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <h3 style="text-align:center">ترتيب الفريق بالدوري الانجليذي</h3>
+
+    <table class="table table-primary shadow">
+        <thead class="table-hover" style="color:ActiveCaption">
+            <tr>
+                <th>الترتيب</th>
+                <th>الفريق</th>
+                <th>لعب</th>
+                <th>له</th>
+                <th>عليه</th>
+                <th>نقاط</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                @foreach (var member in teamInformation.TeamOrder.Values)
+                {
+                    <td>@member</td>
+                }
+            </tr>
+
+        </tbody>
+    </table>
+}
+
+@code {
+    private Models.TeamInformation? teamInformation;
+
+    protected override void OnInitialized()
+    {
+        teamInformation = TeamInformationGlobal.TeamInformation;
+    }
+}

@@ -1,4 +1,6 @@
-﻿@page "/management/countries"
+﻿@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@page "/management/countries"
 @inject AppDbContext db
 @using Microsoft.EntityFrameworkCore
 

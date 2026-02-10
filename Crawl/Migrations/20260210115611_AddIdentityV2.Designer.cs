@@ -4,6 +4,7 @@ using Crawl.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Crawl.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260210115611_AddIdentityV2")]
+    partial class AddIdentityV2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -126,11 +129,16 @@ namespace Crawl.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("CountryId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CountryId");
 
                     b.ToTable("Departments");
                 });
@@ -144,9 +152,6 @@ namespace Crawl.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int?>("Age")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("CountryId")
                         .HasColumnType("int");
 
                     b.Property<int>("DepartmentId")
@@ -175,8 +180,6 @@ namespace Crawl.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("CountryId");
 
                     b.HasIndex("DepartmentId");
 
@@ -318,12 +321,19 @@ namespace Crawl.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("Crawl.Data.Employee", b =>
+            modelBuilder.Entity("Crawl.Data.Department", b =>
                 {
                     b.HasOne("Crawl.Data.Country", "Country")
-                        .WithMany()
-                        .HasForeignKey("CountryId");
+                        .WithMany("Departments")
+                        .HasForeignKey("CountryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
+                    b.Navigation("Country");
+                });
+
+            modelBuilder.Entity("Crawl.Data.Employee", b =>
+                {
                     b.HasOne("Crawl.Data.Department", "Department")
                         .WithMany("Employees")
                         .HasForeignKey("DepartmentId")
@@ -334,8 +344,6 @@ namespace Crawl.Migrations
                         .WithMany()
                         .HasForeignKey("ManagerId")
                         .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("Country");
 
                     b.Navigation("Department");
 
@@ -391,6 +399,11 @@ namespace Crawl.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Crawl.Data.Country", b =>
+                {
+                    b.Navigation("Departments");
                 });
 
             modelBuilder.Entity("Crawl.Data.Department", b =>

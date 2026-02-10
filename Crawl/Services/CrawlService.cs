@@ -1,6 +1,8 @@
-﻿using Crawl.Models;
-using System.Text.Json;
+﻿using Crawl.Components.Pages;
+using Crawl.Models;
 using HtmlAgilityPack;
+using System.Text.Json;
+using static System.Net.Mime.MediaTypeNames;
 
 
 
@@ -90,7 +92,7 @@ namespace Crawl.Services
 
             return partitionMatches;
         }
-        public async Task<TeamInformation> GetTeamInformationAsync(int teamId)
+        public async Task<Models.TeamInformation> GetTeamInformationAsync(int teamId)
         {
             var url = $"https://www.filgoal.com/teams/{teamId}";
 
@@ -108,7 +110,7 @@ namespace Crawl.Services
             var doc = new HtmlDocument();
             doc.LoadHtml(html);
 
-            var team = new TeamInformation();
+            var team = new Models.TeamInformation();
             team.RecentMatches = new List<RecentMatch>();
 
             team.TeamName = doc.DocumentNode.SelectSingleNode("//h1")?.InnerText?.Trim();
@@ -120,11 +122,16 @@ namespace Crawl.Services
 
             if (!string.IsNullOrEmpty(team.TeamLogo) && team.TeamLogo.StartsWith("//"))
                 team.TeamLogo = "https:" + team.TeamLogo;
+            team.TeamOrder ??= new TeamOrder();
 
-            var orderNode = doc.DocumentNode
-                .SelectSingleNode($"//tr[.//a[contains(@href,'/teams/{teamId}')]]/td[1]");
+            var orderNode = doc.DocumentNode.SelectSingleNode("//div[@data-group-id='#champ1503']");
+            var orderHeaderInfo = orderNode?.SelectSingleNode(".//div[@class='fg_rw']")?.SelectNodes(".//div");
+            var headers = orderHeaderInfo?.Select(h => h.InnerText.Trim()).ToArray();
 
-            team.TeamOrder = orderNode?.InnerText?.Trim();
+            var orderValueInfo = orderNode?.SelectSingleNode(".//div[@class='fg_rw s']")?.SelectNodes(".//div");
+            var values = orderValueInfo?.Select(h => h.InnerText.Trim()).ToArray() ?? Array.Empty<string>();
+            team.TeamOrder.Headers = headers ?? Array.Empty<string>();
+            team.TeamOrder.Values = values;
 
             var matchNodes = doc.DocumentNode
                 .SelectNodes("//div[@class='cmim']");
@@ -140,7 +147,9 @@ namespace Crawl.Services
                     {
                         HomeTeamName = team.TeamName,
 
-                        AwayTeamName = matchDoc.DocumentNode.SelectNodes("//div[@class='mims']")[1]?.InnerText.Trim().Split("      ")[^1],
+                        AwayTeamName = matchDoc.DocumentNode.SelectSingleNode("//div[@class='mims']")?.InnerText.Trim().Split("      ")[^1] != team.TeamName ?
+                        matchDoc.DocumentNode.SelectSingleNode("//div[@class='mims']")?.InnerText.Trim().Split("      ")[^1] :
+                        matchDoc.DocumentNode.SelectNodes("//div[@class='mims']")[1]?.InnerText.Trim().Split("      ")[^1],
 
                         MatchResult = matchDoc.DocumentNode.SelectSingleNode("//div[@class='mims']").InnerText.Trim()[0]
                             + " - " + matchDoc.DocumentNode.SelectNodes("//div[@class='mims']")[1]?.InnerText.Trim()[0],

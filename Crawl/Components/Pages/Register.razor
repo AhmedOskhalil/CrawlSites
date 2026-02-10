@@ -1,0 +1,94 @@
+﻿@page "/register"
+@using Crawl.Data
+@using Microsoft.EntityFrameworkCore
+@inject AppDbContext Db
+@inject NavigationManager Nav
+
+<h3>Register</h3>
+
+<EditForm Model="@model" OnValidSubmit="RegisterUser">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label>Full Name</label>
+        <InputText class="form-control" @bind-Value="model.FullName" />
+    </div>
+
+    <div class="mb-3">
+        <label>Email</label>
+        <InputText class="form-control" @bind-Value="model.Email" />
+    </div>
+
+    <div class="mb-3">
+        <label>Password</label>
+        <InputText type="password" class="form-control" @bind-Value="model.Password" />
+    </div>
+
+    <div class="mb-3">
+        <label>Age</label>
+        <InputNumber class="form-control" @bind-Value="model.Age" />
+    </div>
+
+    <div class="mb-3">
+        <label>Salary</label>
+        <InputNumber class="form-control" @bind-Value="model.Salary" />
+    </div>
+
+    <div class="mb-3">
+        <label>Role</label>
+        <InputSelect class="form-select" @bind-Value="model.Role">
+            <option value="Employee">Employee</option>
+            <option value="Manager">Manager</option>
+        </InputSelect>
+    </div>
+
+    <div class="mb-3">
+        <label>Country</label>
+        <InputSelect class="form-select" @bind-Value="model.CountryId">
+            <option value="">Select Country</option>
+            @foreach (var c in Countries)
+            {
+                <option value="@c.Id">@c.Name</option>
+            }
+        </InputSelect>
+    </div>
+
+    <div class="mb-3">
+        <label>Department</label>
+        <InputSelect class="form-select" @bind-Value="model.DepartmentId">
+            <option value="0">Select Department</option>
+            @foreach (var d in Departments)
+            {
+                <option value="@d.Id">@d.Name</option>
+            }
+        </InputSelect>
+    </div>
+
+    <button class="btn btn-primary">Register</button>
+</EditForm>
+
+@code {
+    public Employee model = new();
+
+    private List<Country> Countries = new();
+    private List<Department> Departments = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Countries = await Db.Countries.ToListAsync();
+        Departments = await Db.Departments.ToListAsync();
+    }
+
+    private async Task RegisterUser()
+    {
+        if (model.Role==null)
+        {
+            model.Role = "Employee";
+        }
+        Db.Employees.Add(model);
+        await Db.SaveChangesAsync();
+
+        Nav.NavigateTo("/login");
+    }
+}

@@ -1,5 +1,8 @@
-﻿@page "/management/employees"
+﻿@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@page "/management/employees"
 @inject AppDbContext db
+
 @using Microsoft.EntityFrameworkCore
 
 <h3 class="text-primary mb-3">Employees</h3>
@@ -24,6 +27,8 @@
             <th>Email</th>
             <th>Department</th>
             <th>Manager</th>
+            <th>Salary</th>
+            <th>Age</th>
             <th>Actions</th>
         </tr>
     </thead>
@@ -35,6 +40,8 @@
                 <td>@e.Email</td>
                 <td>@e.Department?.Name</td>
                 <td>@e.Manager?.FullName</td>
+                <td>@e.Salary</td>
+                <td>@e.Age</td>
                 <td>
                     <button class="btn btn-warning btn-sm" @onclick="()=>OpenEdit(e)">Edit</button>
                     <button class="btn btn-danger btn-sm ms-1" @onclick="()=>Delete(e.Id)">Delete</button>

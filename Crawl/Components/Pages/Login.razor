@@ -1,0 +1,57 @@
+﻿@page "/login"
+@using Crawl.Data
+@using Microsoft.EntityFrameworkCore
+@inject AppDbContext Db
+@inject NavigationManager Nav
+
+<h3>Login</h3>
+
+<EditForm Model="@login" OnValidSubmit="LoginUser">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label>Email</label>
+        <InputText class="form-control" @bind-Value="login.Email" />
+    </div>
+
+    <div class="mb-3">
+        <label>Password</label>
+        <InputText type="password" class="form-control" @bind-Value="login.Password" />
+    </div>
+
+    <button class="btn btn-success">Login</button>
+
+    @if (error != null)
+    {
+        <div class="text-danger mt-2">@error</div>
+    }
+</EditForm>
+
+@code {
+    private LoginModel login = new();
+    private string? error;
+
+    private async Task LoginUser()
+    {
+        var user = await Db.Employees
+            .FirstOrDefaultAsync(x =>
+                x.Email == login.Email &&
+                x.Password == login.Password);
+
+        if (user == null)
+        {
+            error = "Invalid email or password";
+            return;
+        }
+
+        // simple redirect (no cookie auth)
+        Nav.NavigateTo("/");
+    }
+
+    class LoginModel
+    {
+        public string Email { get; set; }
+        public string Password { get; set; }
+    }
+}

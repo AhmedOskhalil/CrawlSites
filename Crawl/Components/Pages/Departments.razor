@@ -23,7 +23,6 @@
         {
             <tr>
                 <td>@d.Name</td>
-                <td>@d.Country?.Name</td>
                 <td>
                     <button class="btn btn-warning btn-sm" @onclick="() => OpenEdit(d)">Edit</button>
                     <button class="btn btn-danger btn-sm" @onclick="() => Delete(d.Id)">Delete</button>
@@ -44,12 +43,6 @@
             <div class="modal-content">
                 <div class="modal-body">
                     <input class="form-control mb-2" @bind="newDept.Name" />
-                    <select class="form-select" @bind="newDept.CountryId">
-                        @foreach (var c in countries)
-                        {
-                            <option value="@c.Id">@c.Name</option>
-                        }
-                    </select>
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-success" @onclick="Add">Save</button>
@@ -67,12 +60,6 @@
             <div class="modal-content">
                 <div class="modal-body">
                     <input class="form-control mb-2" @bind="editDept.Name" />
-                    <select class="form-select" @bind="editDept.CountryId">
-                        @foreach (var c in countries)
-                        {
-                            <option value="@c.Id">@c.Name</option>
-                        }
-                    </select>
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-success" @onclick="SaveEdit">Save</button>
@@ -114,7 +101,7 @@
 
     async Task Load()
     {
-        all = await db.Departments.Include(x => x.Country).ToListAsync();
+        all = await db.Departments.ToListAsync();
         ApplyPaging();
     }
 

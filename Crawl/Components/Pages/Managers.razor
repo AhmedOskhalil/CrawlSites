@@ -1,4 +1,6 @@
-﻿@page "/management/managers"
+﻿@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@page "/management/managers"
 @using Crawl.Data
 @inject AppDbContext db
 @using Microsoft.EntityFrameworkCore

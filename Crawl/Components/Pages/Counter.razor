@@ -2,9 +2,13 @@
 @using System.Text.RegularExpressions;
 @using System.Text.Json;
 @using System.Threading.Tasks
+@using Services
+@using Crawl.Components.Pages
 @rendermode InteractiveServer
 @inject Services.CrawlService CrawlService
 @inject IJSRuntime JS
+@inject NavigationManager Navigation
+@inject TeamInformationGlobal TeamInfo
 <PageTitle>Matches</PageTitle>
 
 <div class="container py-4">
@@ -36,282 +40,7 @@
         </div>
     </div>
 
-
-    @* TODAY *@
-    @if (Today)
-    {
-        <h3 class="mb-3 text-primary fw-bold">Today</h3>
-
-        <!-- Partition Select -->
-        <select class="form-select mb-3 w-50 shadow-sm"
-                @bind="SelectedTodayPartition">
-            <option value="">All Leagues</option>
-            @foreach (var p in Partitiones)
-            {
-                <option value="@p.PartitionName">@p.PartitionName</option>
-            }
-        </select>
-
-        @foreach (var partition in Partitiones
-            .Where(p => string.IsNullOrEmpty(SelectedTodayPartition)
-            || p.PartitionName == SelectedTodayPartition))
-        {
-            <div class="card shadow-sm mb-4 border-0">
-
-                <div class="card-header bg-primary text-white fw-bold">
-                    🏆 @partition.PartitionName
-                </div>
-
-                <div class="table-responsive shadow">
-                    <table class="table table-hover align-middle mb-0 shadow">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Home</th>
-                                <th class="text-center">Score</th>
-                                <th class="text-end">Away</th>
-                                <th>Date</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-                            @foreach (var match in partition.Matchs)
-                            {
-                                <tr>
-                                    <td>
-                                        <img src="@match.HomeLogo" width="32"
-                                             class="me-2 rounded-circle" />
-                                        <strong>@match.HomeTeamName</strong>
-                                    </td>
-
-                                    <td class="text-center fw-bold fs-5">
-                                        @match.HomeScore : @match.AwayScore
-                                    </td>
-
-                                    <td class="text-end">
-                                        <strong>@match.AwayTeamName</strong>
-                                        <img  src="@match.AwayLogo" width="32"
-                                             class="ms-2 rounded-circle" />
-                                             <button class="btn btn-sm btn-outline-secondary ms-3"
-                                                     @onclick="() => GetCurrentTeamInformation(match.AwayLogo)"></button>
-                                            ℹ️
-                                    </td>
-
-                                    <td class="text-muted small">
-                                        @match.Date
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-
-            </div>
-        }
-    }
-
-
-    @if (Tommorrow)
-    {
-        <h3 class="mb-3 text-info fw-bold">Tomorrow</h3>
-
-        <select class="form-select mb-3 w-50 shadow-sm"
-                @bind="SelectedTomorrowPartition">
-            <option value="">All Leagues</option>
-            @foreach (var p in TPartitiones)
-            {
-                <option value="@p.PartitionName">@p.PartitionName</option>
-            }
-        </select>
-
-        @foreach (var partition in TPartitiones
-            .Where(p => string.IsNullOrEmpty(SelectedTomorrowPartition)
-            || p.PartitionName == SelectedTomorrowPartition))
-        {
-            <div class="card shadow-sm mb-4 border-0">
-
-                <div class="card-header bg-info text-white fw-bold">
-                    🏆 @partition.PartitionName
-                </div>
-                <div class="table-responsive shadow">
-                    <table class="table table-hover align-middle mb-0 shadow">
-
-                        <thead class="table-light">
-                            <tr>
-                                <th>Home</th>
-                                <th class="text-center">Score</th>
-                                <th class="text-end">Away</th>
-                                <th>Date</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-                            @foreach (var match in partition.Matchs)
-                            {
-                                <tr>
-                                    <td>
-                                        <img src="@match.HomeLogo" width="32" class="me-2 rounded-circle" />
-                                        <strong>@match.HomeTeamName</strong>
-                                    </td>
-
-                                    <td class="text-center fw-bold fs-5">
-                                        @match.HomeScore : @match.AwayScore
-                                    </td>
-
-                                    <td class="text-end">
-                                        <strong>@match.AwayTeamName</strong>
-                                        <img src="@match.AwayLogo" width="32" class="ms-2 rounded-circle" />
-                                    </td>
-
-                                    <td class="text-muted small">
-                                        @match.Date
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-
-                    </table>
-                </div>
-            </div>
-        }
-    }
-
-
-    @* YESTERDAY *@
- 
-    @if (YesterDay)
-    {
-        <h3 class="mb-3 text-secondary fw-bold">Yesterday</h3>
-
-        <select class="form-select mb-3 w-50 shadow-sm"
-                @bind="SelectedYesterdayPartition">
-            <option value="">All Leagues</option>
-            @foreach (var p in YPartitiones)
-            {
-                <option value="@p.PartitionName">@p.PartitionName</option>
-            }
-        </select>
-
-        @foreach (var partition in YPartitiones
-            .Where(p => string.IsNullOrEmpty(SelectedYesterdayPartition)
-            || p.PartitionName == SelectedYesterdayPartition))
-        {
-            <div class="card shadow-sm mb-4 border-0">
-
-                <div class="card-header bg-secondary text-white fw-bold">
-                    🏆 @partition.PartitionName
-                </div>
-                <div class="table-responsive shadow">
-                    <table class="table table-hover align-middle mb-0 shadow">
-
-                        <thead class="table-light">
-                            <tr>
-                                <th>Home</th>
-                                <th class="text-center">Score</th>
-                                <th class="text-end">Away</th>
-                                <th>Date</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-                            @foreach (var match in partition.Matchs)
-                            {
-                                <tr>
-                                    <td>
-                                        <img src="@match.HomeLogo" width="32" class="me-2 rounded-circle" />
-                                        <strong>@match.HomeTeamName</strong>
-                                    </td>
-
-                                    <td class="text-center fw-bold fs-5">
-                                        @match.HomeScore : @match.AwayScore
-                                    </td>
-
-                                    <td class="text-end">
-                                        <strong>@match.AwayTeamName</strong>
-                                        <img src="@match.AwayLogo" width="32" class="ms-2 rounded-circle" />
-                                    </td>
-
-                                    <td class="text-muted small">
-                                        @match.Date
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-
-                    </table>
-                </div>
-            </div>
-        }
-    }
-
-
-    @* PARTICULAR DAY *@
-
-    @if (Pday)
-    {
-        <h3 class="mb-3 text-dark fw-bold">Selected Day</h3>
-
-        <select class="form-select mb-3 w-50 shadow-sm"
-                @bind="SelectedParticularPartition">
-            <option value="">All Leagues</option>
-            @foreach (var p in PPartitiones)
-            {
-                <option value="@p.PartitionName">@p.PartitionName</option>
-            }
-        </select>
-
-        @foreach (var partition in PPartitiones
-            .Where(p => string.IsNullOrEmpty(SelectedParticularPartition)
-            || p.PartitionName == SelectedParticularPartition))
-        {
-            <div class="card shadow-sm mb-4 border-0">
-
-                <div class="card-header bg-dark text-white fw-bold">
-                    🏆 @partition.PartitionName
-                </div>
-
-                <div class="table-responsive shadow">
-                    <table class="table table-hover align-middle mb-0 shadow">
-
-                        <thead class="table-light">
-                            <tr>
-                                <th>Home</th>
-                                <th class="text-center">Score</th>
-                                <th class="text-end">Away</th>
-                                <th>Date</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-                            @foreach (var match in partition.Matchs)
-                            {
-                                <tr>
-                                    <td>
-                                        <img src="@match.HomeLogo" width="32" class="me-2 rounded-circle" />
-                                        <strong>@match.HomeTeamName</strong>
-                                    </td>
-
-                                    <td class="text-center fw-bold fs-5">
-                                        @match.HomeScore : @match.AwayScore
-                                    </td>
-
-                                    <td class="text-end">
-                                        <strong>@match.AwayTeamName</strong>
-                                        <img src="@match.AwayLogo" width="32" class="ms-2 rounded-circle" />
-                                    </td>
-
-                                    <td class="text-muted small">
-                                        @match.Date
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-
-                    </table>
-                </div>
-            </div>
-        }
-    }
-
+    <Matches Partitiones="@Partitiones" />
 </div>
 
 
@@ -320,35 +49,19 @@
     private int currentCount = 0;
     [Parameter]
     public List<Models.Partition> Partitiones { get; set; } = new List<Models.Partition>();
-    public List<Models.Partition> YPartitiones { get; set; } = new List<Models.Partition>();
-    public List<Models.Partition> TPartitiones { get; set; } = new List<Models.Partition>();
-    public List<Models.Partition> PPartitiones { get; set; } = new List<Models.Partition>();
-    private string? SelectedTodayPartition;
-    private string? SelectedYesterdayPartition;
-    private string? SelectedTomorrowPartition;
-    private string? SelectedParticularPartition;
-    public bool Today;
-    public bool YesterDay;
-    public bool Tommorrow;
-    public bool Pday;
+
+    string todaydate = DateTime.Now.ToString("yyyy-MM-dd");
+    string tommorrowdate = DateTime.Now.AddDays(1).ToString("yyyy-MM-dd");
+    string yesterdaydate = DateTime.Now.AddDays(-1).ToString("yyyy-MM-dd");
+
     private DateTime SelectedDate = DateTime.Now;
+
 
     private string FormattedDate =>
         SelectedDate.ToString("yyyy-MM-dd");
     protected override async Task OnInitializedAsync()
     {
-        string todaydate = DateTime.Now.ToString("yyyy-MM-dd");
-        string tommorrowdate = DateTime.Now.AddDays(1).ToString("yyyy-MM-dd");
-        string yesterdaydate = DateTime.Now.AddDays(-1).ToString("yyyy-MM-dd");
         Partitiones = await CrawlService.RunSearchDayAsync(todaydate);
-        TPartitiones = await CrawlService.RunSearchDayAsync(tommorrowdate);
-        YPartitiones = await CrawlService.RunSearchDayAsync(yesterdaydate);
-        Today = true;
-        YesterDay = false;
-        Tommorrow = false;
-        Pday = false;
-
-
     }
     protected override Task OnAfterRenderAsync(bool firstRender)
     {
@@ -375,40 +88,21 @@
     }
     public async Task tommorrow()
     {
-        Tommorrow = true;
-        YesterDay = false;
-        Pday = false; ;
-        Today = false;
+        Partitiones = await CrawlService.RunSearchDayAsync(tommorrowdate);
+
     }
     public async Task yesterday()
     {
-        Tommorrow = false;
-        YesterDay = true;
-        Pday = false;
-        Today = false;
+        Partitiones = await CrawlService.RunSearchDayAsync(yesterdaydate);
 
     }
     public async Task today()
     {
-        Tommorrow = false;
-        YesterDay = false;
-        Pday = false;
-        Today = true;
-
+        Partitiones = await CrawlService.RunSearchDayAsync(todaydate);
     }
     public async Task searchforday()
     {
-        PPartitiones = await CrawlService.RunSearchDayAsync(FormattedDate);
-        Tommorrow = false;
-        YesterDay = false;
-        Today = false;
-        Pday = true;
-    }
-    public async Task  GetCurrentTeamInformation(string logo)
-    {
-        int Url = int.Parse(logo.Split('/').LastOrDefault()?.Replace(".png", "") ?? "");
-        var matchInformation = await CrawlService.GetTeamInformationAsync(Url);
-        Console.WriteLine($"Team Information: {matchInformation}");
+        Partitiones = await CrawlService.RunSearchDayAsync(FormattedDate);
     }
 
 
