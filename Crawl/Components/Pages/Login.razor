@@ -1,8 +1,10 @@
 ﻿@page "/login"
 @using Crawl.Data
 @using Microsoft.EntityFrameworkCore
+@using Crawl.Services
 @inject AppDbContext Db
 @inject NavigationManager Nav
+@inject CurrentUser Current
 
 <h3>Login</h3>
 
@@ -44,6 +46,9 @@
             error = "Invalid email or password";
             return;
         }
+        Current.UserId = user.Id;
+        Current.UserName = user.FullName;
+        Current.userRole = user.Role;
 
         // simple redirect (no cookie auth)
         Nav.NavigateTo("/");

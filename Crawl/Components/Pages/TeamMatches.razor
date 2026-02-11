@@ -1,0 +1,91 @@
+﻿@using Crawl.Services
+@using Crawl.Models
+@inject CrawlService CrawlService
+@inject TeamInformationGlobal TeamInfo
+@inject NavigationManager Navigation
+<div class="card shadow-sm mb-4 border-0">
+    <h3>@teamMatches.TeamName <img src="@teamMatches.TeamLogo"></h3>
+
+    <div class="table-responsive shadow">
+        <table class="table table-hover align-middle mb-0 shadow">
+            <thead class="table-light">
+                <tr>
+                    <th>Home</th>
+                    <th class="text-center">Score</th>
+                    <th class="text-end">Away</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @foreach (var match in teamMatches?.Matches)
+                {
+                    <tr>
+                        <td>
+                            <button class="btn btn-sm btn-outline-secondary ms-3"
+                                    @onclick="() => GetCurrentTeamInformation(match.AwayLogo)">
+                                ℹ️
+                            </button>
+                            <img src="@match.HomeLogo" width="32"
+                                 class="me-2 rounded-circle" />
+                            <strong>@match.HomeTeamName</strong>
+                        </td>
+
+                        <td class="text-center fw-bold fs-5">
+                            @match.HomeScore : @match.AwayScore
+                        </td>
+
+                        <td class="text-end">
+                            <strong>@match.AwayTeamName</strong>
+                            <img src="@match.AwayLogo" width="32"
+                                 class="ms-2 rounded-circle" />
+                            <button class="btn btn-sm btn-outline-secondary ms-3"
+                                    @onclick="() => GetCurrentTeamInformation(match.AwayLogo)">
+                                ℹ️
+                            </button>
+
+                        </td>
+
+                        <td class="text-muted small">
+                            @match.Date
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+</div>
+@code {
+    public Models.TeamMatches teamMatches = new Models.TeamMatches();
+    
+    [Parameter]
+    public int teamId { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        teamId = teamId >0 ?teamId: TeamInfo.TeamInformation.teamId;
+        teamMatches.Matches = new List<Models.Match>();
+        await LoadMatches();
+
+    }
+    public async Task LoadMatches()
+    {
+        Task.Delay(500).Wait();
+        teamMatches = await CrawlService.GetTeamMatchesAsync(teamId);
+        Task.Delay(500).Wait();
+    }
+
+    public async Task GetCurrentTeamInformation(string logo)
+    {
+        int Url = int.Parse(
+            logo.Split('/').LastOrDefault()?.Replace(".png", "") ?? "0"
+        );
+
+        var info = await CrawlService.GetTeamInformationAsync(Url);
+
+        TeamInfo.TeamInformation = info;
+
+        Navigation.NavigateTo("/team-information");
+    }
+
+}

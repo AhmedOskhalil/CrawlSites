@@ -46,6 +46,7 @@ builder.Services.AddScoped<ISpeechToTextService, SpeechToTextService>();
 builder.Services.AddScoped<TeamInformationGlobal>();
 builder.Services.AddScoped<YouTubeDownloadService>();
 builder.Services.AddScoped<EmployeeAuthService>();
+builder.Services.AddScoped<CurrentUser>();
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddAuthorization();

@@ -170,9 +170,70 @@ namespace Crawl.Services
                     team.RecentMatches.Add(match);
                 }
             }
-
+            team.teamId = teamId;
             return team;
         }
 
+        public async Task<Models.TeamMatches> GetTeamMatchesAsync(int teamId)
+        {
+            try
+            {
+                var url = $"https://www.filgoal.com/teams/{teamId}/matches-results";
+                var request = new HttpRequestMessage(HttpMethod.Get, url);
+                request.Headers.Add("referer", "https://www.google.com/");
+                request.Headers.Add("user-agent",
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36");
+                var response = await _httpClient.SendAsync(request);
+                response.EnsureSuccessStatusCode();
+                var html = await response.Content.ReadAsStringAsync();
+                var doc = new HtmlDocument();
+                doc.LoadHtml(html);
+                var TeamMatches = new Models.TeamMatches();
+                TeamMatches.TeamName = doc.DocumentNode.SelectSingleNode("//h1")?.InnerText?.Trim();
+                TeamMatches.TeamLogo = doc.DocumentNode.SelectSingleNode("//h1/a/img")?.GetAttributeValue("src", null);
+                var matchNodes = doc.DocumentNode.SelectNodes("//div[@class='cin_cntnr']");
+                var teamMatches = new List<Match>();
+                foreach (var matchNode in matchNodes)
+                {
+                    var match = new Models.Match();
+                    var matchDoc = new HtmlDocument();
+                    matchDoc.LoadHtml(matchNode.InnerHtml);
+                    teamMatches.Add(new Match()
+                    {
+                        HomeTeamName = matchDoc.DocumentNode.SelectSingleNode("//div[@class='s']//strong")?.InnerText.Trim(),
+
+                        AwayTeamName = matchDoc.DocumentNode.SelectSingleNode("//div[@class='f']//strong")?.InnerText.Trim(),
+
+                        HomeScore = matchDoc.DocumentNode.SelectSingleNode("//div[@class='s']//b")?.InnerText.Trim(),
+
+                        Date = (matchDoc.DocumentNode.SelectSingleNode("//span[2]").InnerText.Contains(":") ?
+                         matchDoc.DocumentNode.SelectSingleNode("//span[2]").InnerText :
+                         (matchDoc.DocumentNode.SelectSingleNode("//span[3]").InnerText.Contains(":") ?
+                         matchDoc.DocumentNode.SelectSingleNode("//span[3]").InnerText : matchDoc.DocumentNode.SelectSingleNode("//span[4]").InnerText)),
+
+                        AwayScore = matchDoc.DocumentNode.SelectSingleNode("//div[@class='f']//b")?.InnerText.Trim(),
+
+                        HomeLogo = matchDoc.DocumentNode.SelectSingleNode("//div[@class='s']//img")?.GetAttributeValue("data-src", null) is string h ? "http:" + h : null,
+
+                        AwayLogo = matchDoc.DocumentNode.SelectSingleNode("//div[@class='f']//img")?.GetAttributeValue("data-src", null) is string a ? "http:" + a: null,
+                        Partition = new Partition()
+                        {
+                            PartitionName = matchDoc.DocumentNode.SelectSingleNode("//div[@class='cin_cntnr']//a")?.InnerText.Trim()
+
+                        }
+
+                    });
+                }
+                TeamMatches.Matches = teamMatches;
+
+                return TeamMatches;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in GetMatchDetailsAsync: {ex.Message}");
+                return null;
+            }
+
+        }
     }
 }
