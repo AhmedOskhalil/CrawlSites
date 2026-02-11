@@ -12,6 +12,8 @@
         public int? HomeTeamScore { get; set; } // "/Date(...)/"
         public int? AwayTeamScore { get; set; } // "/Date(...)/"
         public Partition Partition { get; set; }
+        public bool IsFeatureMatch { get; set; } = false;
+
 
     }
 }

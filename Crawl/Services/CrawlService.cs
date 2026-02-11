@@ -1,4 +1,5 @@
-﻿using Crawl.Components.Pages;
+﻿using Azure;
+using Crawl.Components.Pages;
 using Crawl.Models;
 using HtmlAgilityPack;
 using System.Text.Json;
@@ -178,6 +179,7 @@ namespace Crawl.Services
         {
             try
             {
+                #region RecentMatches
                 var url = $"https://www.filgoal.com/teams/{teamId}/matches-results";
                 var request = new HttpRequestMessage(HttpMethod.Get, url);
                 request.Headers.Add("referer", "https://www.google.com/");
@@ -215,7 +217,7 @@ namespace Crawl.Services
 
                         HomeLogo = matchDoc.DocumentNode.SelectSingleNode("//div[@class='s']//img")?.GetAttributeValue("data-src", null) is string h ? "http:" + h : null,
 
-                        AwayLogo = matchDoc.DocumentNode.SelectSingleNode("//div[@class='f']//img")?.GetAttributeValue("data-src", null) is string a ? "http:" + a: null,
+                        AwayLogo = matchDoc.DocumentNode.SelectSingleNode("//div[@class='f']//img")?.GetAttributeValue("data-src", null) is string a ? "http:" + a : null,
                         Partition = new Partition()
                         {
                             PartitionName = matchDoc.DocumentNode.SelectSingleNode("//div[@class='cin_cntnr']//a")?.InnerText.Trim()
@@ -225,6 +227,11 @@ namespace Crawl.Services
                     });
                 }
                 TeamMatches.Matches = teamMatches;
+                #endregion
+                var featureMatches = await this.GetMatchesFeature(teamId);
+                if (featureMatches != null)
+                    foreach (var match in featureMatches)
+                        TeamMatches.Matches.Add(match);
 
                 return TeamMatches;
             }
@@ -234,6 +241,65 @@ namespace Crawl.Services
                 return null;
             }
 
+        }
+
+        public async Task<List<Match>> GetMatchesFeature(int teamId)
+        {
+            try
+            {
+                #region featurematch
+                var furl = $"https://www.filgoal.com/teams/{teamId}/matches-fixtures";
+                var frequest = new HttpRequestMessage(HttpMethod.Get, furl);
+                frequest.Headers.Add("referer", "https://www.google.com/");
+                frequest.Headers.Add("user-agent",
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36");
+                var fresponse = await _httpClient.SendAsync(frequest);
+                fresponse.EnsureSuccessStatusCode();
+                var fhtml = await fresponse.Content.ReadAsStringAsync();
+                var fdoc = new HtmlDocument();
+                fdoc.LoadHtml(fhtml);
+                var matchNodesfeature = fdoc.DocumentNode.SelectNodes("//div[@class='cin_cntnr']");
+                var teamMatchesfeature = new List<Match>();
+                foreach (var matchNode in matchNodesfeature)
+                {
+                    var fmatchDoc = new HtmlDocument();
+                    fmatchDoc.LoadHtml(matchNode.InnerHtml);
+                    teamMatchesfeature.Add(new Match()
+                    {
+                        HomeTeamName = fmatchDoc.DocumentNode.SelectSingleNode("//div[@class='s']//strong")?.InnerText.Trim(),
+
+                        AwayTeamName = fmatchDoc.DocumentNode.SelectSingleNode("//div[@class='f']//strong")?.InnerText.Trim(),
+
+                        HomeScore = fmatchDoc.DocumentNode.SelectSingleNode("//div[@class='s']//b")?.InnerText.Trim(),
+
+                        Date = (fmatchDoc.DocumentNode.SelectSingleNode("//span[2]").InnerText.Contains(":") ?
+                         fmatchDoc.DocumentNode.SelectSingleNode("//span[2]").InnerText :
+                         (fmatchDoc.DocumentNode.SelectSingleNode("//span[3]").InnerText.Contains(":") ?
+                         fmatchDoc.DocumentNode.SelectSingleNode("//span[3]").InnerText : fmatchDoc.DocumentNode.SelectSingleNode("//span[4]").InnerText)),
+
+                        AwayScore = fmatchDoc.DocumentNode.SelectSingleNode("//div[@class='f']//b")?.InnerText.Trim(),
+
+                        HomeLogo = fmatchDoc.DocumentNode.SelectSingleNode("//div[@class='s']//img")?.GetAttributeValue("data-src", null) is string h ? "http:" + h : null,
+
+                        AwayLogo = fmatchDoc.DocumentNode.SelectSingleNode("//div[@class='f']//img")?.GetAttributeValue("data-src", null) is string a ? "http:" + a : null,
+                        Partition = new Partition()
+                        {
+                            PartitionName = fmatchDoc.DocumentNode.SelectSingleNode("//div[@class='cin_cntnr']//a")?.InnerText.Trim()
+
+                        },
+                        IsFeatureMatch = true
+                    });
+
+                }
+                return teamMatchesfeature;
+                #endregion
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in GetMatchesFeature: {ex.Message}");
+                return null;
+            }
         }
     }
 }
