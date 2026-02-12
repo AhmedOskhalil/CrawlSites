@@ -1,0 +1,45 @@
+﻿@if (Visible)
+{
+    <div style="
+                display:flex;
+                flex-direction:column;
+                justify-content:center;
+                align-items:center;
+                padding:40px;
+                width:100%;">
+
+        <div style="
+                    width:90px;
+                    height:90px;
+                    border-radius:50%;
+                    border:8px solid #dbeafe;
+                    border-top:8px solid #2563eb;
+                    border-right:8px solid #60a5fa;
+                    animation:spin 1s linear infinite;">
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(Text))
+        {
+            <div style="
+                                margin-top:18px;
+                                font-size:18px;
+                                font-weight:600;
+                                color:#2563eb;">
+                @Text
+            </div>
+        }
+    </div>
+}
+
+<style>
+    @@keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+</style>
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public string? Text { get; set; } = "Loading...";
+}

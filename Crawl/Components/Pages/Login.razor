@@ -2,9 +2,10 @@
 @using Crawl.Data
 @using Microsoft.EntityFrameworkCore
 @using Crawl.Services
-@inject AppDbContext Db
 @inject NavigationManager Nav
-@inject CurrentUser Current
+@inject HttpClient Http
+@inject UserManager<AppUser> UserManager
+@inject SignInManager<AppUser> SignInManager
 
 <h3>Login</h3>
 
@@ -36,24 +37,28 @@
 
     private async Task LoginUser()
     {
-        var user = await Db.Employees
-            .FirstOrDefaultAsync(x =>
-                x.Email == login.Email &&
-                x.Password == login.Password);
+        var user = await UserManager.FindByEmailAsync(login.Email);
 
         if (user == null)
         {
             error = "Invalid email or password";
             return;
         }
-        Current.UserId = user.Id;
-        Current.UserName = user.FullName;
-        Current.userRole = user.Role;
 
-        // simple redirect (no cookie auth)
+        var result = await SignInManager.PasswordSignInAsync(
+            user,
+            login.Password,
+            isPersistent: true,
+            lockoutOnFailure: false);
+
+        if (!result.Succeeded)
+        {
+            error = "Invalid email or password";
+            return;
+        }
+
         Nav.NavigateTo("/");
     }
-
     class LoginModel
     {
         public string Email { get; set; }

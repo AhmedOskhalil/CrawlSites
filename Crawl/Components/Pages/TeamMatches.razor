@@ -4,7 +4,7 @@
 @inject TeamInformationGlobal TeamInfo
 @inject NavigationManager Navigation
 <div class="card shadow-sm mb-4 border-0">
-    <h3>@teamMatches.TeamName <img src="@teamMatches?.TeamLogo"></h3>
+    <h3 style="text-align:center">@teamMatches.TeamName <img src="@teamMatches?.TeamLogo"></h3>
     <div class="container">
         <button class="btn btn-secondary" disabled="@(!showRecent)" @onclick="Recent">المباريات السابقة </button>
         <button class="btn btn-primary" disabled="@(showRecent)" @onclick="Upcoming">المباريات القادمة </button>

@@ -1,14 +1,17 @@
-﻿@page "/team-information"
+﻿@page "/team-information/{TeamId:int}"
 @using Crawl.Services
+@using System.Threading.Tasks
+@inject CrawlService CrawlService
 
 @inject TeamInformationGlobal TeamInformationGlobal
 
 @if (teamInformation == null)
 {
-    <p>Loading...</p>
+    <Crawl.Components.Pages.Partials.Loading Visible="@IsLoading" Text="جاري تحميل معلومات الفريق..." />
 }
 else
 {
+
     <TeamMatches teamId="@teamInformation.teamId" />
     <h3 style="text-align:center">ترتيب الفريق بالدوري الانجليذي</h3>
 
@@ -37,9 +40,23 @@ else
 
 @code {
     private Models.TeamInformation? teamInformation;
+    private bool IsLoading => teamInformation == null;
 
-    protected override void OnInitialized()
+    [Parameter]
+    public int TeamId { get; set; }
+
+    protected override async Task OnInitializedAsync()
     {
         teamInformation = TeamInformationGlobal.TeamInformation;
+        if (teamInformation == null)
+        {
+            await LoadTeamInformation();
+        }
     }
+    public async Task LoadTeamInformation()
+    {
+        teamInformation = await CrawlService.GetTeamInformationAsync(TeamId);
+        TeamInformationGlobal.TeamInformation = teamInformation;
+    }
+
 }

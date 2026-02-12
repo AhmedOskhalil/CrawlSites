@@ -1,0 +1,70 @@
+﻿@if (Visible)
+{
+    <div style="
+                display:flex;
+                flex-direction:column;
+                align-items:center;
+                justify-content:center;
+                padding:60px 20px;
+                width:100%;">
+
+        <div style="
+                    width:120px;
+                    height:120px;
+                    border-radius:50%;
+                    border:6px solid #22c55e;
+                    display:flex;
+                    align-items:center;
+                    justify-content:center;
+                    animation:pop 0.4s ease-out;">
+
+            <div style="
+                        font-size:60px;
+                        color:#22c55e;
+                        animation:fadeIn 0.6s ease-out;">
+                ✓
+            </div>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(Text))
+        {
+            <div style="
+                                margin-top:20px;
+                                font-size:22px;
+                                font-weight:600;
+                                color:#22c55e;
+                                animation:fadeIn 0.8s ease-out;">
+                @Text
+            </div>
+        }
+    </div>
+}
+
+<style>
+    @@keyframes pop {
+        0% {
+            transform: scale(0.5);
+            opacity: 0;
+        }
+
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+</style>
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public string? Text { get; set; } = "Success!";
+}

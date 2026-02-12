@@ -88,15 +88,15 @@
 
     public async Task GetCurrentTeamInformation(string logo)
     {
-        int Url = int.Parse(
+        int TeamId = int.Parse(
             logo.Split('/').LastOrDefault()?.Replace(".png", "") ?? "0"
         );
 
-        var info = await CrawlService.GetTeamInformationAsync(Url);
+        var info = await CrawlService.GetTeamInformationAsync(TeamId);
 
         TeamInfo.TeamInformation = info;
 
-        Navigation.NavigateTo("/team-information");
+        Navigation.NavigateTo($"/team-information/{TeamId}");
     }
 
 
