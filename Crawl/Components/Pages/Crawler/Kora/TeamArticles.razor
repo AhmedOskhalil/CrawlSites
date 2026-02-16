@@ -1,30 +1,15 @@
-﻿@page "/articles"
-@using Crawl.Models
-@using Crawl.Services
+﻿@page "/team-article/{*ArticleUrl}"
 @using Crawl.Services.Crawl
-@using System.Threading.Tasks
+@using Crawl.Models
 @inject CrawlService CrawlService
-@inject NavigationManager NavigationContext
-
+@inject NavigationManager NavigationManager
+<InputText @bind-Value="TeamName"  />
+<button class="btn btn-success" @onclick="@(() => GoToContent(TeamName))"> ابحث </button>
 <div style="min-height:100vh;background:linear-gradient(135deg,#667eea,#764ba2);padding:40px 0;">
 
     <div style="width:90%;margin:auto;background:white;border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,0.12);padding:30px;">
 
-        <h2 style="margin-bottom:25px;font-weight:800;text-align:center;">اخر الأخبار 📰</h2>
-
-        <!-- Search Input with Button -->
-        <div style="margin-bottom:20px;text-align:center; display:flex; justify-content:center; gap:10px;">
-            <input type="text"
-                   placeholder="ابحث هنا ..."
-                   style="width:60%;padding:10px 15px;border-radius:12px;border:1px solid #ccc;"
-                   @bind="Keyword" />
-
-            <button class="btn btn-primary"
-                    style="padding:10px 20px;border-radius:12px;background:#667eea;border:none;color:white;font-weight:600;cursor:pointer;"
-                    @onclick="Search">
-                بحث
-            </button>
-        </div>
+        <h2 style="margin-bottom:25px;font-weight:800;text-align:center;">  اخر الأخبار 📰</h2>
 
         @if (articles.Count > 0)
         {
@@ -57,26 +42,23 @@
 
 @code {
     public List<Article> articles { get; set; } = new();
-    public string Keyword { get; set; } = "";
-
+    private string TeamName { get; set; } = "أرسنال";
     protected override async Task OnInitializedAsync()
     {
-        articles = await CrawlService.GetArticlesAsync();
+        articles = await CrawlService.GetTeamArticles(TeamName);
     }
 
-    private async Task GoToContent(string url)
+    private void GoToContent(ChangeEventArgs e)
+    {
+        TeamName = e.Value?.ToString();
+    }
+
+    private void GoToContent(string url)
     {
         if (string.IsNullOrEmpty(url)) return;
+
         var encodedUrl = Uri.EscapeDataString(url);
-        NavigationContext.NavigateTo($"/article-content/{encodedUrl}");
-    }
 
-    private async Task Search()
-    {
-        articles = string.IsNullOrWhiteSpace(Keyword)
-            ? articles
-            : await CrawlService.GetTeamArticles(Keyword);
-
-        StateHasChanged();
+        NavigationManager.NavigateTo($"/team-article/{encodedUrl}");
     }
 }

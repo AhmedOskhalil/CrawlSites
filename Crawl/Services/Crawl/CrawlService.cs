@@ -360,7 +360,7 @@ namespace Crawl.Services.Crawl
                 articleContent.Title= fdoc.DocumentNode.SelectSingleNode("//div[@class=\"title\"]//h1").InnerText.Trim();
                 articleContent.Text = fdoc.DocumentNode.SelectSingleNode("//div[@id=\"details_content\"]").InnerText.Trim();
                 articleContent.PublishedDate= fdoc.DocumentNode.SelectSingleNode("//div[@class=\"title\"]//p").InnerText.Trim();
-                articleContent.Author= fdoc.DocumentNode.SelectSingleNode("//div[@class=\"title\"]//p[2]").InnerText.Trim();
+                articleContent.Author= fdoc.DocumentNode.SelectSingleNode("//div[@class=\"title\"]//p[2]")?.InnerText.Trim();
                 articleContent.Images = fdoc.DocumentNode.SelectNodes("//div[@class=\"details\"]//img")?
                     .Select(img => img.GetAttributeValue("data-src", null) is string h ? "https:" + h : null).ToArray();
 
@@ -384,6 +384,47 @@ namespace Crawl.Services.Crawl
             catch (Exception ex)
             {
                 Console.WriteLine($"Error in GetArticleContentAsync: {ex.Message}");
+                return null;
+            }
+        }
+
+        public async Task<List<Models.Article>> GetTeamArticles(string TeamName)
+        {
+
+            try
+            {
+                var furl = $"https://www.filgoal.com/search/filter?keyword={TeamName}";
+                var frequest = new HttpRequestMessage(HttpMethod.Get, furl);
+                frequest.Headers.Add("referer", "https://www.google.com/");
+                frequest.Headers.Add("user-agent",
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36");
+                var fresponse = await _httpClient.SendAsync(frequest);
+                fresponse.EnsureSuccessStatusCode();
+                var fhtml = await fresponse.Content.ReadAsStringAsync();
+                var fdoc = new HtmlDocument();
+                fdoc.LoadHtml(fhtml);
+                var matchNodesfeature = fdoc.DocumentNode.SelectNodes("//main//li");
+                var articles = new List<Article>();
+                foreach (var matchNode in matchNodesfeature)
+                {
+                    var fmatchDoc = new HtmlDocument();
+                    fmatchDoc.LoadHtml(matchNode.InnerHtml);
+                    articles.Add(new Article()
+                    {
+                        Title = fmatchDoc.DocumentNode.SelectSingleNode("//h6")?.InnerText.Trim(),
+
+                        Url = fmatchDoc.DocumentNode.SelectSingleNode("//a")?.GetAttributeValue("href", null),
+                        imageUrl = fmatchDoc.DocumentNode.SelectSingleNode("//img")?.GetAttributeValue("data-src", null) is string h ? "https:" + h : null,
+
+                    });
+
+                }
+                return articles;
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in GetArticlesAsync: {ex.Message}");
                 return null;
             }
         }
