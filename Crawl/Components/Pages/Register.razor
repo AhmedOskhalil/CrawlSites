@@ -1,73 +1,56 @@
 ﻿@page "/register"
 @using Crawl.Data
-@using Crawl.Models
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
+@using System.Security.Claims
+
 @inject UserManager<AppUser> UserManager
-@inject SignInManager<AppUser> SignInManager
-@inject NavigationManager Nav
 @inject AppDbContext Db
+@inject NavigationManager Nav
 
 <h3>Register</h3>
 
-<EditForm Model="@model" OnValidSubmit="RegisterUser">
+<EditForm Model="@employee" OnValidSubmit="RegisterUser">
     <DataAnnotationsValidator />
     <ValidationSummary />
 
     <div class="mb-3">
         <label>Full Name</label>
-        <InputText class="form-control" @bind-Value="model.FullName" />
-        <ValidationMessage For="@(() => model.FullName)" />
+        <InputText class="form-control" @bind-Value="employee.FullName" />
     </div>
 
     <div class="mb-3">
         <label>Email</label>
-        <InputText class="form-control" @bind-Value="model.Email" />
-        <ValidationMessage For="@(() => model.Email)" />
+        <InputText class="form-control" @bind-Value="employee.Email" />
     </div>
 
     <div class="mb-3">
         <label>Password</label>
-        <InputText type="password" class="form-control" @bind-Value="model.Password" />
-        <ValidationMessage For="@(() => model.Password)" />
+        <InputText type="password" class="form-control" @bind-Value="employee.Password" />
     </div>
 
     <div class="mb-3">
         <label>Role</label>
-        <InputSelect class="form-select" @bind-Value="model.Role">
+        <InputSelect class="form-select" @bind-Value="employee.Role">
             <option value="Employee">Employee</option>
             <option value="Manager">Manager</option>
         </InputSelect>
-        <ValidationMessage For="@(() => model.Role)" />
     </div>
 
     <div class="mb-3">
         <label>Salary</label>
-        <InputNumber class="form-control" @bind-Value="model.Salary" />
-        <ValidationMessage For="@(() => model.Salary)" />
+        <InputNumber class="form-control" @bind-Value="employee.Salary" />
     </div>
 
     <div class="mb-3">
         <label>Age</label>
-        <InputNumber class="form-control" @bind-Value="model.Age" />
-        <ValidationMessage For="@(() => model.Age)" />
+        <InputNumber class="form-control" @bind-Value="employee.Age" />
     </div>
 
-    <div class="mb-3">
-        <label>Department</label>
-        <InputSelect class="form-select" @bind-Value="model.DepartmentId">
-            <option value="0">Select Department</option>
-            @foreach (var d in Departments)
-            {
-                <option value="@d.Id">@d.Name</option>
-            }
-        </InputSelect>
-        <ValidationMessage For="@(() => model.DepartmentId)" />
-    </div>
-
+    <!-- COUNTRY DROPDOWN -->
     <div class="mb-3">
         <label>Country</label>
-        <InputSelect class="form-select" @bind-Value="model.CountryId">
+        <InputSelect class="form-select" @bind-Value="employee.CountryId">
             <option value="">Select Country</option>
             @foreach (var c in Countries)
             {
@@ -76,69 +59,76 @@
         </InputSelect>
     </div>
 
+    <!-- DEPARTMENT DROPDOWN -->
+    <div class="mb-3">
+        <label>Department</label>
+        <InputSelect class="form-select" @bind-Value="employee.DepartmentId">
+            <option value="0">Select Department</option>
+            @foreach (var d in Departments)
+            {
+                <option value="@d.Id">@d.Name</option>
+            }
+        </InputSelect>
+    </div>
+
     <button class="btn btn-primary">Register</button>
+
+    @if (!string.IsNullOrEmpty(error))
+    {
+        <div class="text-danger mt-2">@error</div>
+    }
 </EditForm>
 
 @code {
-    private RegisterModel model = new();
-
-    private List<Department> Departments = new();
+    private Employee employee = new();
     private List<Country> Countries = new();
+    private List<Department> Departments = new();
+    private string? error;
 
     protected override async Task OnInitializedAsync()
     {
-        Departments = await Db.Departments.ToListAsync();
         Countries = await Db.Countries.ToListAsync();
+        Departments = await Db.Departments.ToListAsync();
     }
 
     private async Task RegisterUser()
-    {       
-        if (string.IsNullOrEmpty(model.Role))
-            model.Role = "Employee";
+    {
+        error = null;
 
-        // 1️⃣ Create Identity user
+        if (string.IsNullOrEmpty(employee.Role))
+            employee.Role = "Employee";
+
+        var countryName = Countries
+            .FirstOrDefault(c => c.Id == employee.CountryId)?.Name ?? "Unknown";
+
         var appUser = new AppUser
         {
-            UserName = model.Email,
-            Email = model.Email,
-            Name = model.FullName,
-            Country = model.CountryId.HasValue
-                ? Countries.FirstOrDefault(c => c.Id == model.CountryId.Value)?.Name ?? "Unknown"
-                : "Unknown",
-            Age = model.Age ?? 18
+            UserName = employee.Email,
+            Email = employee.Email,
+            Name = employee.FullName,
+            Country = countryName,
+            Age = employee.Age ?? 18
         };
 
-        var result = await UserManager.CreateAsync(appUser, model.Password);
+        var result = await UserManager.CreateAsync(appUser, employee.Password);
+
         if (!result.Succeeded)
         {
-            foreach (var error in result.Errors)
-            {
-                Console.WriteLine(error.Description); // optionally show in UI
-            }
+            error = string.Join(", ", result.Errors.Select(e => e.Description));
             return;
         }
+        await UserManager.AddClaimAsync(appUser,
+    new Claim("FullName", appUser.Name));
 
-        await UserManager.AddToRoleAsync(appUser, model.Role);
+        await UserManager.AddToRoleAsync(appUser, employee.Role);
 
-        // 2️⃣ Create corresponding Employee record
-        var employee = new Employee
-        {
-            FullName = model.FullName,
-            Email = model.Email,
-            Password = model.Password, // optional if you store password here
-            Role = model.Role,
-            Salary = model.Salary,
-            Age = model.Age,
-            DepartmentId = model.DepartmentId,
-            CountryId = model.CountryId
-        };
+        // Link employee to identity
+        employee.UserId = appUser.Id;
+        employee.IsFirstLogin = true;
 
         Db.Employees.Add(employee);
         await Db.SaveChangesAsync();
 
-        // 3️⃣ Auto-login
-        await SignInManager.SignInAsync(appUser, isPersistent: true);
-
-        Nav.NavigateTo("/");
+        Nav.NavigateTo("/login", true);
     }
 }

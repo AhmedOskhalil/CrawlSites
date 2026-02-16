@@ -5,13 +5,6 @@
 
 @inject TeamInformationGlobal TeamInformationGlobal
 
-@if (teamInformation == null)
-{
-    <Crawl.Components.Pages.Partials.Loading Visible="@IsLoading" Text="جاري تحميل معلومات الفريق..." />
-}
-else
-{
-
     <TeamMatches teamId="@teamInformation.teamId" />
     <h3 style="text-align:center">ترتيب الفريق بالدوري الانجليذي</h3>
 
@@ -36,7 +29,7 @@ else
 
         </tbody>
     </table>
-}
+
 
 @code {
     private Models.TeamInformation? teamInformation;

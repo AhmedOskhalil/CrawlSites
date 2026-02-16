@@ -4,62 +4,70 @@
 @inject TeamInformationGlobal TeamInfo
 @inject NavigationManager Navigation
 <div class="card shadow-sm mb-4 border-0">
-    <h3 style="text-align:center">@teamMatches.TeamName <img src="@teamMatches?.TeamLogo"></h3>
-    <div class="container">
-        <button class="btn btn-secondary" disabled="@(!showRecent)" @onclick="Recent">المباريات السابقة </button>
-        <button class="btn btn-primary" disabled="@(showRecent)" @onclick="Upcoming">المباريات القادمة </button>
-        <div class="row">
-            <div class="table-responsive shadow">
-                <table class="table table-hover align-middle mb-0 shadow">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Home</th>
-                            <th class="text-center">Score</th>
-                            <th class="text-end">Away</th>
-                            <th>Date</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        @foreach (var match in (teamMatches?.Matches.Where(x => x.IsFeatureMatch == showRecent)))
-                        {
+    @if(teamMatches == null)
+    {
+       <Crawl.Components.Pages.Partials.Loading Visible="true" />
+    }
+    else
+    {
+        <h3 style="text-align:center">@teamMatches.TeamName <img src="@teamMatches?.TeamLogo"></h3>
+        <div class="container">
+            <button class="btn btn-secondary" disabled="@(!showRecent)" @onclick="Recent">المباريات السابقة </button>
+            <button class="btn btn-primary" disabled="@(showRecent)" @onclick="Upcoming">المباريات القادمة </button>
+            <div class="row">
+                <div class="table-responsive shadow">
+                    <table class="table table-hover align-middle mb-0 shadow">
+                        <thead class="table-light">
                             <tr>
-                                <td>
-                                    <button class="btn btn-sm btn-outline-secondary ms-3"
-                                            @onclick="() => GetCurrentTeamInformation(match.AwayLogo)">
-                                        ℹ️
-                                    </button>
-                                    <img src="@match.HomeLogo" width="32"
-                                         class="me-2 rounded-circle" />
-                                    <strong>@match.HomeTeamName</strong>
-                                </td>
-
-                                <td class="text-center fw-bold fs-5">
-                                    @match.HomeScore : @match.AwayScore
-                                </td>
-
-                                <td class="text-end">
-                                    <strong>@match.AwayTeamName</strong>
-                                    <img src="@match.AwayLogo" width="32"
-                                         class="ms-2 rounded-circle" />
-                                    <button class="btn btn-sm btn-outline-secondary ms-3"
-                                            @onclick="() => GetCurrentTeamInformation(match.AwayLogo)">
-                                        ℹ️
-                                    </button>
-
-                                </td>
-
-                                <td class="text-muted small">
-                                    @match.Date
-                                </td>
+                                <th>Home</th>
+                                <th class="text-center">Score</th>
+                                <th class="text-end">Away</th>
+                                <th>Date</th>
                             </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>
+                        </thead>
 
-    </div>
+                        <tbody>
+                            @foreach (var match in (teamMatches?.Matches.Where(x => x.IsFeatureMatch == showRecent)))
+                            {
+                                <tr>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-secondary ms-3"
+                                                @onclick="() => GetCurrentTeamInformation(match.AwayLogo)">
+                                            ℹ️
+                                        </button>
+                                        <img src="@match.HomeLogo" width="32"
+                                             class="me-2 rounded-circle" />
+                                        <strong>@match.HomeTeamName</strong>
+                                    </td>
+
+                                    <td class="text-center fw-bold fs-5">
+                                        @match.HomeScore : @match.AwayScore
+                                    </td>
+
+                                    <td class="text-end">
+                                        <strong>@match.AwayTeamName</strong>
+                                        <img src="@match.AwayLogo" width="32"
+                                             class="ms-2 rounded-circle" />
+                                        <button class="btn btn-sm btn-outline-secondary ms-3"
+                                                @onclick="() => GetCurrentTeamInformation(match.AwayLogo)">
+                                            ℹ️
+                                        </button>
+
+                                    </td>
+
+                                    <td class="text-muted small">
+                                        @match.Date
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    }
+   
 
 
 </div>

@@ -301,5 +301,91 @@ namespace Crawl.Services
                 return null;
             }
         }
+
+        public async Task<List<Article>> GetArticlesAsync()
+        {
+            try
+            {
+                var furl = $"https://www.filgoal.com/articles";
+                var frequest = new HttpRequestMessage(HttpMethod.Get, furl);
+                frequest.Headers.Add("referer", "https://www.google.com/");
+                frequest.Headers.Add("user-agent",
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36");
+                var fresponse = await _httpClient.SendAsync(frequest);
+                fresponse.EnsureSuccessStatusCode();
+                var fhtml = await fresponse.Content.ReadAsStringAsync();
+                var fdoc = new HtmlDocument();
+                fdoc.LoadHtml(fhtml);
+                var matchNodesfeature = fdoc.DocumentNode.SelectNodes("//main//li");
+                var articles = new List<Article>();
+                foreach (var matchNode in matchNodesfeature)
+                {
+                    var fmatchDoc = new HtmlDocument();
+                    fmatchDoc.LoadHtml(matchNode.InnerHtml);
+                    articles.Add(new Article()
+                    {
+                        Title = fmatchDoc.DocumentNode.SelectSingleNode("//h6")?.InnerText.Trim(),
+
+                        Url = fmatchDoc.DocumentNode.SelectSingleNode("//a")?.GetAttributeValue("href", null),
+                        imageUrl = fmatchDoc.DocumentNode.SelectSingleNode("//img")?.GetAttributeValue("data-src", null) is string h ? "https:" + h : null,
+
+                    });
+
+                }
+                return articles;
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in GetArticlesAsync: {ex.Message}");
+                return null;
+            }
+        }
+
+        public async Task<Models.ArticleContent> GetArticleContentAsync(string ArticleUrl)
+        {
+            try
+            {
+                var furl = $"https://www.filgoal.com{ArticleUrl}";
+                var frequest = new HttpRequestMessage(HttpMethod.Get, furl);
+                frequest.Headers.Add("referer", "https://www.google.com/");
+                frequest.Headers.Add("user-agent",
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36");
+                var fresponse = await _httpClient.SendAsync(frequest);
+                fresponse.EnsureSuccessStatusCode();
+                var fhtml = await fresponse.Content.ReadAsStringAsync();
+                var fdoc = new HtmlDocument();
+                fdoc.LoadHtml(fhtml);
+                Models.ArticleContent articleContent = new Models.ArticleContent();
+                articleContent.Title= fdoc.DocumentNode.SelectSingleNode("//div[@class=\"title\"]//h1").InnerText.Trim();
+                articleContent.Text = fdoc.DocumentNode.SelectSingleNode("//div[@id=\"details_content\"]").InnerText.Trim();
+                articleContent.PublishedDate= fdoc.DocumentNode.SelectSingleNode("//div[@class=\"title\"]//p").InnerText.Trim();
+                articleContent.Author= fdoc.DocumentNode.SelectSingleNode("//div[@class=\"title\"]//p[2]").InnerText.Trim();
+                articleContent.Images = fdoc.DocumentNode.SelectNodes("//div[@class=\"details\"]//img")?
+                    .Select(img => img.GetAttributeValue("data-src", null) is string h ? "https:" + h : null).ToArray();
+
+                var relatedArticleNodes = fdoc.DocumentNode.SelectNodes("//div[@class=\"ntva_box_list\"]//a");
+                articleContent.RelatedArticles ??= new List<RelatedArticle>();
+                foreach (var relatedNode in relatedArticleNodes)
+                {
+                    var relatedDoc = new HtmlDocument();
+                    relatedDoc.LoadHtml(relatedNode.InnerHtml);
+                    
+                    articleContent.RelatedArticles.Add(new RelatedArticle()
+                    {
+                        Title = relatedDoc.DocumentNode.SelectSingleNode("//span")?.InnerText.Trim(),
+                        Url = relatedNode.OuterHtml.ToString().Split("href=")[1].Split(">")[0].Split('\"')[1].Trim(),
+                        ImageUrl = relatedDoc.DocumentNode.SelectSingleNode("//img")?.GetAttributeValue("data-src", null) is string h ? "https:" + h : null,
+                    });
+                }
+
+                return articleContent;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in GetArticleContentAsync: {ex.Message}");
+                return null;
+            }
+        }
     }
 }

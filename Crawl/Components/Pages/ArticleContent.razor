@@ -1,0 +1,85 @@
+﻿@page "/article-content/{*ArticleUrl}"
+@using Crawl.Models
+@using Crawl.Services
+@inject CrawlService CrawlService
+@inject NavigationManager NavigationContext
+
+<div style="min-height:100vh;padding:40px 0;">
+
+    @if (articleContent != null && !string.IsNullOrEmpty(articleContent.Title))
+    {
+        <div style="width:90%;margin:auto;background:white;border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,0.12);overflow:hidden;">
+
+            <!-- HEADER -->
+            <div style="padding:30px 35px;background:linear-gradient(135deg,#ff9966,#ff5e62);color:white;text-align:center;">
+                <h1 style="margin:0 0 10px 0;font-size:32px;font-weight:800;">@articleContent.Title</h1>
+                <p style="margin:0;font-size:15px;opacity:.95;">بواسطة @articleContent.Author | @articleContent.PublishedDate</p>
+            </div>
+
+            <!-- IMAGE -->
+            @if (articleContent.Images?.Length > 0)
+            {
+                <div style="padding:25px 25px 0 25px;">
+                    <img src="@articleContent.Images[0]" style="width:100%;max-height:520px;object-fit:contain;border-radius:14px;background:#f3f3f3;" />
+                </div>
+            }
+
+            <!-- CONTENT -->
+            <div style="padding:30px 35px 40px 35px;font-size:19px;line-height:1.9;color:#333;">
+                @((MarkupString)articleContent.Text)
+            </div>
+            @if (articleContent.RelatedArticles?.Count > 0)
+            {
+                <div style="padding:0 35px 40px 35px;">
+                    <h3 style="font-weight:700;margin-bottom:20px;">مقالات ذات صلة</h3>
+
+                    <div style="display:flex;flex-wrap:wrap;gap:20px;">
+                        @foreach (var related in articleContent.RelatedArticles)
+                        {
+                            <div @onclick="() => GoToContent(related.Url)" style="flex:1 1 calc(25% - 20px);min-width:220px;cursor:pointer;background:#f9fafc;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.06);transition:0.2s;overflow:hidden;">
+
+                                <img src="@related.ImageUrl" style="width:100%;height:140px;object-fit:cover;" />
+
+                                <div style="padding:12px;">
+                                    <h4 style="margin:0;font-size:16px;font-weight:700;color:#333;">@related.Title</h4>
+                                </div>
+
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+        </div>
+    }
+    else
+    {
+        <div style="text-align:center;margin-top:120px;">
+            <Crawl.Components.Pages.Partials.Loading Text="جاري تحميل المقالة" Visible="true" />
+        </div>
+    }
+
+</div>
+
+@code {
+    [Parameter]
+    public string ArticleUrl { get; set; } = "";
+
+    public Models.ArticleContent articleContent { get; set; } = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!string.IsNullOrEmpty(ArticleUrl))
+        {
+            var decodedUrl = Uri.UnescapeDataString(ArticleUrl);
+            articleContent = await CrawlService.GetArticleContentAsync(decodedUrl);
+        }
+    }
+    private void GoToContent(string url)
+    {
+        if (string.IsNullOrEmpty(url)) return;
+
+        var encodedUrl = Uri.EscapeDataString(url);
+        NavigationContext.NavigateTo($"/article-content/{encodedUrl}");
+    }
+}

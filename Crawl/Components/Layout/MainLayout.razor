@@ -1,30 +1,42 @@
 ﻿@inherits LayoutComponentBase
 @using Crawl.Services
-@inject NavigationManager Navigation
-@inject CurrentUser Current
+@using Microsoft.AspNetCore.Components.Authorization
+
+@inject AuthenticationStateProvider AuthStateProvider
+@inject CustomAuthStateProvider CustomAuthStateProvider
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
 <div class="page">
     <div class="sidebar">
         <NavMenu />
     </div>
 
     <main>
-        @if (string.IsNullOrEmpty(Current.UserName))
-        {
-            <div class="top-row px-4" >
-                <NavLink class="nav-link" href="register">
-                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Register
-                </NavLink>
-                <NavLink class="nav-link" href="login">
-                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Login
-                </NavLink>
-            </div>
-        }
-        else
-        {
-            <div class="top-row px-4" >
-                <strong>@Current.UserName</strong>
-                </div>
-        }
+        <div class="top-row px-4 d-flex justify-content-end align-items-center">
+
+            <AuthorizeView>
+                <Authorized>
+                    <span class="me-2">
+                        <i class="bi bi-person-circle"></i> @fullname
+                    </span>
+
+                    <button class="btn btn-outline-danger btn-sm" @onclick="Logout">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                    </button>
+                </Authorized>
+
+                <NotAuthorized>
+                    <NavLink class="nav-link me-2" href="register">
+                        <i class="bi bi-person-plus-fill"></i> Register
+                    </NavLink>
+                    <NavLink class="nav-link" href="login">
+                        <i class="bi bi-box-arrow-in-right"></i> Login
+                    </NavLink>
+                </NotAuthorized>
+            </AuthorizeView>
+
+        </div>
 
         <article class="content px-4">
             @Body
@@ -32,20 +44,28 @@
     </main>
 </div>
 
-<div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
-</div>
+@code {
+    private string fullname = "";
 
-@code{
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        var CurrentUser = Current;
-        if (CurrentUser.UserId != 0 && string.IsNullOrEmpty(CurrentUser.UserName))
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
         {
-            Navigation.NavigateTo("/");
+            fullname = user.FindFirst("FullName")?.Value ?? user.Identity.Name;
         }
     }
 
+    private async Task Logout()
+    {
+        var success = await JS.InvokeAsync<bool>("logout");
+        if (success)
+        {
+            CustomAuthStateProvider.NotifyUserLogout();
+            Nav.NavigateTo(Nav.Uri, forceLoad: true);
+        }
+
+    }
 }

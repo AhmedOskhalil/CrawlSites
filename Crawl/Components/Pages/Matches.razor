@@ -1,4 +1,7 @@
-﻿@using Crawl.Models;
+﻿
+@using Crawl.Components.Pages.Partials
+
+@using Crawl.Models;
 @using Crawl.Services;
 @using Microsoft.AspNetCore.Components;
 @inject CrawlService CrawlService
@@ -9,75 +12,84 @@
 <h3 class="mb-3 text-primary fw-bold">Today</h3>
  *@
 <!-- Partition Select -->
-<select class="form-select mb-3 w-50 shadow-sm"
-        @bind="SelectedTodayPartition">
-    <option value="">All Leagues</option>
-    @foreach (var p in Partitiones)
-    {
-        <option value="@p.PartitionName">@p.PartitionName</option>
-    }
-</select>
-
-@foreach (var partition in Partitiones
-            .Where(p => string.IsNullOrEmpty(SelectedTodayPartition)
-            || p.PartitionName == SelectedTodayPartition))
+@if(Partitiones.Count > 0)
 {
-    <div class="card shadow-sm mb-4 border-0">
+    <select class="form-select mb-3 w-50 shadow-sm"
+            @bind="SelectedTodayPartition">
+        <option value="">All Leagues</option>
+        @foreach (var p in Partitiones)
+        {
+            <option value="@p.PartitionName">@p.PartitionName</option>
+        }
+    </select>
 
-        <div class="card-header bg-primary text-white fw-bold">
-            🏆 @partition.PartitionName
-        </div>
+    @foreach (var partition in Partitiones
+                .Where(p => string.IsNullOrEmpty(SelectedTodayPartition)
+                || p.PartitionName == SelectedTodayPartition))
+    {
+        <div class="card shadow-sm mb-4 border-0">
 
-        <div class="table-responsive shadow">
-            <table class="table table-hover align-middle mb-0 shadow">
-                <thead class="table-light">
-                    <tr>
-                        <th>Home</th>
-                        <th class="text-center">Score</th>
-                        <th class="text-end">Away</th>
-                        <th>Date</th>
-                    </tr>
-                </thead>
+            <div class="card-header bg-primary text-white fw-bold">
+                🏆 @partition.PartitionName
+            </div>
 
-                <tbody>
-                    @foreach (var match in partition.Matchs)
-                    {
+            <div class="table-responsive shadow">
+                <table class="table table-hover align-middle mb-0 shadow">
+                    <thead class="table-light">
                         <tr>
-                            <td>
-                                <button class="btn btn-sm btn-outline-secondary ms-3"
-                                        @onclick="() => GetCurrentTeamInformation(match.AwayLogo)">
-                                    ℹ️
-                                </button>
-                                <img src="@match.HomeLogo" width="32"
-                                     class="me-2 rounded-circle" />
-                                <strong>@match.HomeTeamName</strong>
-                            </td>
-
-                            <td class="text-center fw-bold fs-5">
-                                @match.HomeScore : @match.AwayScore
-                            </td>
-
-                            <td class="text-end">
-                                <strong>@match.AwayTeamName</strong>
-                                <img src="@match.AwayLogo" width="32"
-                                     class="ms-2 rounded-circle" />
-                                <button class="btn btn-sm btn-outline-secondary ms-3"
-                                        @onclick="() => GetCurrentTeamInformation(match.AwayLogo)">
-                                    ℹ️
-                                </button>
-
-                            </td>
-
-                            <td class="text-muted small">
-                                @match.Date
-                            </td>
+                            <th>Home</th>
+                            <th class="text-center">Score</th>
+                            <th class="text-end">Away</th>
+                            <th>Date</th>
                         </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
+                    </thead>
 
-    </div>
+                    <tbody>
+                        @foreach (var match in partition.Matchs)
+                        {
+                            <tr>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-secondary ms-3"
+                                            @onclick="() => GetCurrentTeamInformation(match.AwayLogo)">
+                                        ℹ️
+                                    </button>
+                                    <img src="@match.HomeLogo" width="32"
+                                         class="me-2 rounded-circle" />
+                                    <strong>@match.HomeTeamName</strong>
+                                </td>
+
+                                <td class="text-center fw-bold fs-5">
+                                    @match.HomeScore : @match.AwayScore
+                                </td>
+
+                                <td class="text-end">
+                                    <strong>@match.AwayTeamName</strong>
+                                    <img src="@match.AwayLogo" width="32"
+                                         class="ms-2 rounded-circle" />
+                                    <button class="btn btn-sm btn-outline-secondary ms-3"
+                                            @onclick="() => GetCurrentTeamInformation(match.AwayLogo)">
+                                        ℹ️
+                                    </button>
+
+                                </td>
+
+                                <td class="text-muted small">
+                                    @match.Date
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    }
+
+}
+
+else
+{
+    <Loading Visible="true" />
 }
 
 

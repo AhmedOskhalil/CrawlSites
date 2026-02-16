@@ -1,4 +1,5 @@
 ﻿@page "/counter"
+
 @using System.Text.RegularExpressions;
 @using System.Text.Json;
 @using System.Threading.Tasks
@@ -13,12 +14,14 @@
 
 <div class="container py-4">
 
-    <h1 class="text-center fw-bold mb-4">⚽ All Matches</h1>
+    <h1 class="text-center fw-bold mb-4">⚽ جميع المباريات
+        <button class="btn btn-outline-dark px-4" @onclick="GoToArticles">الأخبار 📰 </button>
 
+    </h1>
+    
     <!-- Top Controls -->
     <div class="card shadow-sm mb-4">
         <div class="card-body d-flex flex-wrap gap-2 justify-content-center">
-
             <button class="btn btn-outline-primary px-4" @onclick="today">Today</button>
             <button class="btn btn-outline-secondary px-4" @onclick="yesterday">Yesterday</button>
             <button class="btn btn-outline-info px-4" @onclick="tommorrow">Tomorrow</button>
@@ -39,7 +42,7 @@
 
         </div>
     </div>
-
+    
     <Matches Partitiones="@Partitiones" />
 </div>
 
@@ -103,6 +106,10 @@
     public async Task searchforday()
     {
         Partitiones = await CrawlService.RunSearchDayAsync(FormattedDate);
+    }
+    public async Task GoToArticles()
+    {
+        Navigation.NavigateTo("/articles");
     }
 
 

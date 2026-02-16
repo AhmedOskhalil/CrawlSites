@@ -1,11 +1,11 @@
 ﻿@page "/login"
-@using Crawl.Data
-@using Microsoft.EntityFrameworkCore
 @using Crawl.Services
-@inject NavigationManager Nav
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@inject IJSRuntime JS
 @inject HttpClient Http
-@inject UserManager<AppUser> UserManager
-@inject SignInManager<AppUser> SignInManager
+@inject NavigationManager Nav
+@inject CustomAuthStateProvider CustomAuthStateProvider
 
 <h3>Login</h3>
 
@@ -25,43 +25,45 @@
 
     <button class="btn btn-success">Login</button>
 
-    @if (error != null)
+    @if (!string.IsNullOrEmpty(error))
     {
         <div class="text-danger mt-2">@error</div>
     }
 </EditForm>
 
 @code {
+
     private LoginModel login = new();
     private string? error;
 
+
+
     private async Task LoginUser()
     {
-        var user = await UserManager.FindByEmailAsync(login.Email);
+        error = null;
 
-        if (user == null)
+        var success = await JS.InvokeAsync<bool>(
+            "login",
+            login.Email,
+            login.Password);
+
+        if (!success)
         {
             error = "Invalid email or password";
             return;
         }
+        var user = new ClaimsPrincipal(new ClaimsIdentity(new[] {
+                                        new Claim(ClaimTypes.Name, login.Email),
+                                        new Claim("FullName", "Ahmed Khalil")
+                                    }, "apiauth"));
 
-        var result = await SignInManager.PasswordSignInAsync(
-            user,
-            login.Password,
-            isPersistent: true,
-            lockoutOnFailure: false);
-
-        if (!result.Succeeded)
-        {
-            error = "Invalid email or password";
-            return;
-        }
-
-        Nav.NavigateTo("/");
+        CustomAuthStateProvider.NotifyUserAuthentication(user);
+        Nav.NavigateTo("/", forceLoad: true);
     }
-    class LoginModel
+
+    public class LoginModel
     {
-        public string Email { get; set; }
-        public string Password { get; set; }
+        public string Email { get; set; } = "";
+        public string Password { get; set; } = "";
     }
 }

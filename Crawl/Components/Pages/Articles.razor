@@ -1,0 +1,57 @@
+﻿@page "/articles"
+@using Crawl.Models
+@using Crawl.Services
+@inject CrawlService CrawlService
+@inject NavigationManager NavigationContext
+
+<div style="min-height:100vh;background:linear-gradient(135deg,#667eea,#764ba2);padding:40px 0;">
+
+    <div style="width:90%;margin:auto;background:white;border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,0.12);padding:30px;">
+
+        <h2 style="margin-bottom:25px;font-weight:800;text-align:center;">  اخر الأخبار 📰</h2>
+
+        @if (articles.Count > 0)
+        {
+            <div style="display:flex;flex-direction:column;gap:20px;">
+
+                @foreach (var article in articles)
+                {
+                    <div @onclick="() => GoToContent(article.Url)" style="display:flex;gap:20px;align-items:center;padding:18px;border-radius:14px;background:#f9fafc;cursor:pointer;transition:0.2s;box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+
+                        <img src="@article.imageUrl" style="width:120px;height:120px;object-fit:cover;border-radius:12px;flex-shrink:0;" />
+
+                        <div style="flex:1;">
+                            <h4 style="margin:0 0 8px 0;font-weight:700;color:#333;">@article.Title</h4>
+                            <button style="padding:8px 18px;border:none;border-radius:8px;background:#667eea;color:white;font-weight:600;cursor:pointer;">إعرف أكثر</button>
+                        </div>
+
+                    </div>
+                }
+
+            </div>
+        }
+        else
+        {
+            <Crawl.Components.Pages.Partials.Loading Text="جاري تحميل الأخبار" Visible="true" />
+        }
+
+    </div>
+
+</div>
+
+@code {
+    public List<Article> articles { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        articles = await CrawlService.GetArticlesAsync();
+    }
+
+    private void GoToContent(string url)
+    {
+        if (string.IsNullOrEmpty(url)) return;
+
+        var encodedUrl = Uri.EscapeDataString(url);
+        NavigationContext.NavigateTo($"/article-content/{encodedUrl}");
+    }
+}
