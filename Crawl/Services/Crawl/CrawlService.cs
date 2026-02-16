@@ -7,7 +7,7 @@ using static System.Net.Mime.MediaTypeNames;
 
 
 
-namespace Crawl.Services
+namespace Crawl.Services.Crawl
 {
     public class CrawlService
     {

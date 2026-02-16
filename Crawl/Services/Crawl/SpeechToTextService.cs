@@ -4,7 +4,7 @@ using Microsoft.CognitiveServices.Speech.Audio;
 using System.Text;
 using Xabe.FFmpeg;
 
-namespace Crawl.Services
+namespace Crawl.Services.Crawl
 {
     public class SpeechToTextService : ISpeechToTextService
     {

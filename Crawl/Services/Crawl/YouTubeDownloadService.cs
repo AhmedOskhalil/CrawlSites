@@ -4,7 +4,7 @@ using YoutubeExplode.Videos.Streams;
 using System.Net;
 using System.Net.Http.Headers;
 
-namespace Crawl.Services
+namespace Crawl.Services.Crawl
 {
     public class YouTubeDownloadService
     {
