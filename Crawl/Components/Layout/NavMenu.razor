@@ -1,78 +1,84 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">Crawl</a>
-    </div>
-</div>
+﻿
+<input type="checkbox"
+       title="Navigation menu"
+       class="navbar-toggler" />
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+<div class="nav-scrollable"
+     onclick="document.querySelector('.navbar-toggler').click()">
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
-        <!-- Management section -->
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                Management
-            </NavLink>
-        </div>
+    <nav class="nav flex-column p-3">
 
-        <div class="nav-item px-3 ms-3">
-            <NavLink class="nav-link" href="/management/countries">
-                🌎 Countries
-            </NavLink>
-        </div>
-        <div class="nav-item px-3 ms-3">
-            <NavLink class="nav-link" href="/management/departments">
-                🏬 Departments
-            </NavLink>
-        </div>
-        <div class="nav-item px-3 ms-3">
-            <NavLink class="nav-link" href="/management/employees">
-                👤 Employees
-            </NavLink>
-        </div>
-        <div class="nav-item px-3 ms-3">
-            <NavLink class="nav-link" href="/management/managers">
-               👔 Managers
-            </NavLink>
-        </div>
-        <!-- Other components section -->
-        <div class="nav-item px-3">
-            <div class="nav-link text-muted" a>Crawl</div>
-        </div>
+        <NavLink class="modern-link"
+                 href="/counter"
+                 Match="NavLinkMatch.All">
 
-        <div class="nav-item px-3 ms-3">
-            <NavLink class="nav-link" href="counter">
-                 ⚽ المباريات
-            </NavLink>
-        </div>
+            <i class="fas fa-futbol"></i>
+            <span> ⚽ المباريات </span>
 
-        <div class="nav-item px-3 ms-3">
-            <NavLink class="nav-link" href="articles">
-                📄 الأخبار
-            </NavLink>
-        </div>
-        <div class="nav-item px-3 ms-3">
-            <NavLink class="nav-link" href="team-article">
-                📄 أخبار فريقك
-            </NavLink>
-        </div>
+        </NavLink>
 
-        <div class="nav-item px-3 ms-3">
-            <NavLink class="nav-link" href="youtube-downloader">
-                 🎬 YouTube Downloader
-            </NavLink>
-        </div>
+        <NavLink class="modern-link"
+                 href="/articles">
 
-        <div class="nav-item px-3 ms-3">
-            <NavLink class="nav-link" href="xo">
-                ❌ XO
-            </NavLink>
-        </div>
-        <div class="nav-item px-3 ms-3">
-            <NavLink class="nav-link" href="weather">
-                🌤️ Weather
-            </NavLink>
-        </div>
+            <i class="fas fa-newspaper"></i>
+            <span> 📰 الأخبار</span>
+
+        </NavLink>
+
     </nav>
 </div>
 
+<style>
+    .nav-scrollable {
+        height: 100vh;
+        background: linear-gradient(180deg,#0f172a,#111827);
+        padding-top: 10px;
+    }
+
+    .app-logo {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 28px;
+        font-weight: 800;
+        color: white !important;
+        text-decoration: none;
+    }
+
+        .app-logo i {
+            color: #fbbf24;
+            font-size: 30px;
+        }
+
+    .modern-link {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 18px 20px;
+        margin-bottom: 12px;
+        border-radius: 16px;
+        color: #e5e7eb !important;
+        text-decoration: none;
+        font-size: 18px;
+        font-weight: 700;
+        transition: 0.25s ease;
+        background: rgba(255,255,255,0.04);
+    }
+
+        .modern-link i {
+            font-size: 24px;
+            width: 28px;
+            text-align: center;
+        }
+
+        .modern-link:hover {
+            background: rgba(255,255,255,0.12);
+            transform: translateX(5px);
+        }
+
+        .modern-link.active {
+            background: linear-gradient(135deg,#2563eb,#1d4ed8);
+            color: white !important;
+            box-shadow: 0 8px 20px rgba(37,99,235,0.35);
+        }
+</style>

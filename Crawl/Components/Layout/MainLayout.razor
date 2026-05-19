@@ -1,4 +1,5 @@
 ﻿@inherits LayoutComponentBase
+
 @using Crawl.Services
 @using Microsoft.AspNetCore.Components.Authorization
 
@@ -7,65 +8,256 @@
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
+<div style="
+display:flex;
+min-height:100vh;
+background:#0f172a;">
+
+    <!-- SIDEBAR -->
+    <div style="
+    width:300px;
+    background:linear-gradient(180deg,#111827,#0f172a);
+    border-right:1px solid rgba(255,255,255,.05);
+    box-shadow:0 0 40px rgba(0,0,0,.35);
+    position:fixed;
+    top:0;
+    left:0;
+    bottom:0;
+    overflow-y:auto;
+    z-index:1000;">
+
+        <!-- LOGO -->
+        <div style="
+        padding:35px 28px;
+        border-bottom:1px solid rgba(255,255,255,.05);">
+
+            <div style="
+            display:flex;
+            align-items:center;
+            gap:16px;">
+
+                <div style="
+                width:65px;
+                height:65px;
+                border-radius:22px;
+                background:linear-gradient(135deg,#2563eb,#7c3aed);
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                color:white;
+                font-size:32px;
+                box-shadow:0 10px 25px rgba(37,99,235,.35);">
+
+                    ⚽
+
+                </div>
+
+                <div>
+
+                    <h2 style="
+                    margin:0;
+                    color:white;
+                    font-size:30px;
+                    font-weight:900;">
+
+                        خليل
+
+                    </h2>
+
+                    <div style="
+                    color:#94a3b8;
+                    font-size:14px;
+                    margin-top:4px;">
+
+                        منصة كروية
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- NAVIGATION -->
+        <div style="padding:20px 16px;">
+
+            <NavMenu />
+
+        </div>
+
     </div>
 
-    <main>
-        <div class="top-row px-4 d-flex justify-content-end align-items-center">
+    <!-- MAIN -->
+    <div style="
+    flex:1;
+    margin-left:300px;
+    display:flex;
+    flex-direction:column;
+    min-height:100vh;">
 
+        <!-- TOPBAR -->
+        <div style="
+        height:90px;
+        padding:0 40px;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        background:rgba(17,24,39,.75);
+        backdrop-filter:blur(16px);
+        border-bottom:1px solid rgba(255,255,255,.05);
+        position:sticky;
+        top:0;
+        z-index:999;">
+
+            <!-- PAGE TITLE -->
+            <div>
+
+                <h1 style="
+                margin:0;
+                color:white;
+                font-size:28px;
+                font-weight:900;">
+
+                    منصة كرة القدم
+
+                </h1>
+
+                <div style="
+                color:#94a3b8;
+                margin-top:4px;
+                font-size:14px;">
+
+                    المباريات • الأخبار • الإحصائيات
+
+                </div>
+
+            </div>
+
+            <!-- USER -->
             <AuthorizeView>
-                <Authorized>
-                    <span class="me-2">
-                        <i class="bi bi-person-circle"></i> @fullname
-                    </span>
 
-                    <button class="btn btn-outline-danger btn-sm" @onclick="Logout">
-                        <i class="bi bi-box-arrow-right"></i> Logout
-                    </button>
+                <Authorized>
+
+                    <div style="
+                    display:flex;
+                    align-items:center;
+                    gap:18px;">
+
+                        <!-- USER CARD -->
+                        <div style="
+                        display:flex;
+                        align-items:center;
+                        gap:14px;
+                        background:#111827;
+                        border:1px solid rgba(255,255,255,.05);
+                        padding:12px 18px;
+                        border-radius:18px;
+                        box-shadow:0 10px 25px rgba(0,0,0,.25);">
+
+                            <div style="
+                            width:48px;
+                            height:48px;
+                            border-radius:16px;
+                            background:linear-gradient(135deg,#2563eb,#1d4ed8);
+                            display:flex;
+                            align-items:center;
+                            justify-content:center;
+                            color:white;
+                            font-size:20px;
+                            font-weight:900;">
+
+                                👤
+
+                            </div>
+
+                            <div>
+
+                                <div style="
+                                color:#94a3b8;
+                                font-size:13px;">
+
+                                    مرحباً بك
+
+                                </div>
+
+                                <div style="
+                                color:white;
+                                font-size:16px;
+                                font-weight:800;">
+
+                                    @fullname
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <!-- LOGOUT -->
+                        <button @onclick="Logout"
+                                style="
+                                border:none;
+                                background:linear-gradient(135deg,#ef4444,#dc2626);
+                                color:white;
+                                padding:14px 22px;
+                                border-radius:16px;
+                                font-size:15px;
+                                font-weight:800;
+                                box-shadow:0 10px 25px rgba(239,68,68,.3);">
+
+                            🚪 تسجيل الخروج
+
+                        </button>
+
+                    </div>
+
                 </Authorized>
 
-                <NotAuthorized>
-                    <NavLink class="nav-link me-2" href="register">
-                        <i class="bi bi-person-plus-fill"></i> Register
-                    </NavLink>
-                    <NavLink class="nav-link" href="login">
-                        <i class="bi bi-box-arrow-in-right"></i> Login
-                    </NavLink>
-                </NotAuthorized>
             </AuthorizeView>
 
         </div>
 
-        <article class="content px-4">
+        <!-- CONTENT -->
+        <div style="
+        flex:1;
+        padding:35px;">
+
             @Body
-        </article>
-    </main>
+
+        </div>
+
+    </div>
+
 </div>
 
 @code {
+
     private string fullname = "";
 
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+
         var user = authState.User;
 
         if (user.Identity?.IsAuthenticated == true)
         {
-            fullname = user.FindFirst("FullName")?.Value ?? user.Identity.Name;
+            fullname = user.FindFirst("FullName")?.Value
+                ?? user.Identity.Name;
         }
     }
 
     private async Task Logout()
     {
         var success = await JS.InvokeAsync<bool>("logout");
+
         if (success)
         {
             CustomAuthStateProvider.NotifyUserLogout();
+
             Nav.NavigateTo(Nav.Uri, forceLoad: true);
         }
-
     }
+
 }

@@ -1,29 +1,127 @@
 ﻿@page "/team-article/{*ArticleUrl}"
+
 @using Crawl.Services.Crawl
 @using Crawl.Models
+
 @inject CrawlService CrawlService
 @inject NavigationManager NavigationManager
-<InputText @bind-Value="TeamName"  />
-<button class="btn btn-success" @onclick="@(() => GoToContent(TeamName))"> ابحث </button>
-<div style="min-height:100vh;background:linear-gradient(135deg,#667eea,#764ba2);padding:40px 0;">
 
-    <div style="width:90%;margin:auto;background:white;border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,0.12);padding:30px;">
+<div style="
+min-height:100vh;
+background:#0f172a;
+padding:40px 30px;">
 
-        <h2 style="margin-bottom:25px;font-weight:800;text-align:center;">  اخر الأخبار 📰</h2>
+    <div style="
+    max-width:1500px;
+    margin:auto;">
 
+        <!-- HEADER -->
+        <div style="
+        margin-bottom:35px;">
+
+            <h1 style="
+            color:white;
+            font-size:48px;
+            font-weight:900;
+            margin-bottom:10px;">
+
+                📰 أخبار الفريق
+
+            </h1>
+
+            <div style="
+            color:#94a3b8;
+            font-size:18px;">
+
+                ابحث عن أخبار الفريق وتحليلاته
+
+            </div>
+
+        </div>
+
+        <!-- SEARCH -->
+        <div style="
+        display:flex;
+        gap:14px;
+        margin-bottom:40px;
+        flex-wrap:wrap;">
+
+            <InputText @bind-Value="TeamName"
+                       style="
+                       flex:1;
+                       min-width:280px;
+                       background:#111827;
+                       border:1px solid #1e293b;
+                       color:white;
+                       padding:18px 20px;
+                       border-radius:18px;
+                       font-size:16px;" />
+
+            <button @onclick="@(() => Search())"
+                    style="
+                    border:none;
+                    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+                    color:white;
+                    padding:18px 28px;
+                    border-radius:18px;
+                    font-weight:800;">
+
+                🔍 بحث
+
+            </button>
+
+        </div>
+
+        <!-- ARTICLES -->
         @if (articles.Count > 0)
         {
-            <div style="display:flex;flex-direction:column;gap:20px;">
+            <div style="
+                display:grid;
+                grid-template-columns:repeat(auto-fill,minmax(340px,1fr));
+                gap:26px;">
 
                 @foreach (var article in articles)
                 {
-                    <div @onclick="() => GoToContent(article.Url)" style="display:flex;gap:20px;align-items:center;padding:18px;border-radius:14px;background:#f9fafc;cursor:pointer;transition:0.2s;box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+                    <div @onclick="() => GoToContent(article.Url)"
+                         style="
+                                 background:#111827;
+                                 border-radius:26px;
+                                 overflow:hidden;
+                                 cursor:pointer;
+                                 border:1px solid rgba(255,255,255,.05);
+                                 box-shadow:0 15px 35px rgba(0,0,0,.25);">
 
-                        <img src="@article.imageUrl" style="width:120px;height:120px;object-fit:cover;border-radius:12px;flex-shrink:0;" />
+                        <img src="@article.imageUrl"
+                             style="
+                                     width:100%;
+                                     height:240px;
+                                     object-fit:cover;" />
 
-                        <div style="flex:1;">
-                            <h4 style="margin:0 0 8px 0;font-weight:700;color:#333;">@article.Title</h4>
-                            <button style="padding:8px 18px;border:none;border-radius:8px;background:#667eea;color:white;font-weight:600;cursor:pointer;">إعرف أكثر</button>
+                        <div style="padding:24px;">
+
+                            <h3 style="
+                                    color:white;
+                                    font-size:22px;
+                                    line-height:1.5;
+                                    font-weight:800;
+                                    margin-bottom:20px;">
+
+                                @article.Title
+
+                            </h3>
+
+                            <button style="
+                                    border:none;
+                                    background:linear-gradient(135deg,#7c3aed,#6d28d9);
+                                    color:white;
+                                    padding:12px 18px;
+                                    border-radius:14px;
+                                    font-weight:700;">
+
+                                إقرأ المزيد
+
+                            </button>
+
                         </div>
 
                     </div>
@@ -33,7 +131,8 @@
         }
         else
         {
-            <Crawl.Components.Pages.Partials.Loading Text="جاري تحميل الأخبار" Visible="true" />
+            <Crawl.Components.Pages.Partials.Loading Text="جاري تحميل الأخبار"
+                                                     Visible="true" />
         }
 
     </div>
@@ -41,16 +140,19 @@
 </div>
 
 @code {
+
     public List<Article> articles { get; set; } = new();
-    private string TeamName { get; set; } = "أرسنال";
+
+    private string TeamName { get; set; } = "Arsenal";
+
     protected override async Task OnInitializedAsync()
     {
         articles = await CrawlService.GetTeamArticles(TeamName);
     }
 
-    private void GoToContent(ChangeEventArgs e)
+    private async Task Search()
     {
-        TeamName = e.Value?.ToString();
+        articles = await CrawlService.GetTeamArticles(TeamName);
     }
 
     private void GoToContent(string url)
@@ -59,6 +161,7 @@
 
         var encodedUrl = Uri.EscapeDataString(url);
 
-        NavigationManager.NavigateTo($"/team-article/{encodedUrl}");
+        NavigationManager.NavigateTo($"/article-content/{encodedUrl}");
     }
+
 }

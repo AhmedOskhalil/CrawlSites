@@ -1,39 +1,351 @@
 ﻿@page "/team-information/{TeamId:int}"
-@using System.Threading.Tasks
+
 @using Crawl.Services
 @using Crawl.Services.Crawl
-@inject CrawlService CrawlService
 
+@inject CrawlService CrawlService
 @inject TeamInformationGlobal TeamInformationGlobal
 
-    <TeamMatches teamId="@teamInformation.teamId" />
-    <h3 style="text-align:center">ترتيب الفريق بالدوري الانجليذي</h3>
+<PageTitle>معلومات الفريق</PageTitle>
 
-    <table class="table table-primary shadow">
-        <thead class="table-hover" style="color:ActiveCaption">
-            <tr>
-                <th>الترتيب</th>
-                <th>الفريق</th>
-                <th>لعب</th>
-                <th>له</th>
-                <th>عليه</th>
-                <th>نقاط</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                @foreach (var member in teamInformation.TeamOrder.Values)
-                {
-                    <td>@member</td>
-                }
-            </tr>
+@if (IsLoading)
+{
+    <div style="
+        min-height:100vh;
+        background:#0f172a;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        color:white;
+        font-size:28px;
+        font-weight:800;">
 
-        </tbody>
-    </table>
+        تحميل معلومات الفريق...
 
+    </div>
+}
+else
+{
+    <div style="
+        min-height:100vh;
+        background:#0f172a;
+        padding:40px 30px;">
+
+        <div style="
+            max-width:1500px;
+            margin:auto;">
+
+            <!-- TEAM HEADER -->
+            <div style="
+                background:linear-gradient(135deg,#111827,#1e293b);
+                border-radius:32px;
+                padding:35px;
+                margin-bottom:35px;
+                border:1px solid rgba(255,255,255,.05);
+                box-shadow:0 20px 40px rgba(0,0,0,.35);">
+
+                <div style="
+                    display:flex;
+                    justify-content:space-between;
+                    align-items:center;
+                    flex-wrap:wrap;
+                    gap:25px;">
+
+                    <div style="
+                        display:flex;
+                        align-items:center;
+                        gap:22px;">
+
+                        <img src="@teamInformation.TeamLogo"
+                             style="
+                                 width:110px;
+                                 height:110px;
+                                 border-radius:24px;
+                                 background:white;
+                                 padding:12px;
+                                 object-fit:contain;" />
+
+                        <div>
+
+                            <h1 style="
+                                color:white;
+                                font-size:48px;
+                                font-weight:900;
+                                margin-bottom:10px;">
+
+                                @teamInformation.TeamName
+
+                            </h1>
+
+                            <div style="
+                                color:#94a3b8;
+                                font-size:18px;">
+
+                                إحصائيات ومباريات الفريق
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div style="
+                        background:rgba(37,99,235,.15);
+                        border:1px solid rgba(37,99,235,.25);
+                        padding:18px 24px;
+                        border-radius:22px;
+                        color:white;
+                        min-width:180px;
+                        text-align:center;">
+
+                        <div style="
+                            font-size:15px;
+                            color:#93c5fd;
+                            margin-bottom:8px;">
+
+                            ترتيب الفريق
+
+                        </div>
+
+                        <div style="
+                            font-size:42px;
+                            font-weight:900;">
+
+                            #@teamInformation.TeamOrder.Values.FirstOrDefault()
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- MATCHES -->
+            <div style="margin-bottom:40px;">
+
+                <div style="
+                    display:flex;
+                    align-items:center;
+                    gap:12px;
+                    margin-bottom:22px;">
+
+                    <div style="
+                        width:50px;
+                        height:50px;
+                        border-radius:16px;
+                        background:linear-gradient(135deg,#2563eb,#1d4ed8);
+                        display:flex;
+                        align-items:center;
+                        justify-content:center;
+                        color:white;
+                        font-size:24px;">
+
+                        ⚽
+
+                    </div>
+
+                    <div>
+
+                        <h2 style="
+                            color:white;
+                            margin:0;
+                            font-size:34px;
+                            font-weight:900;">
+
+                            مباريات الفريق
+
+                        </h2>
+
+                        <div style="
+                            color:#94a3b8;">
+
+                            آخر المباريات والنتائج
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div style="
+                    background:#111827;
+                    border-radius:28px;
+                    padding:25px;
+                    border:1px solid rgba(255,255,255,.05);
+                    box-shadow:0 15px 35px rgba(0,0,0,.3);">
+
+                    <TeamMatches teamId="@teamInformation.teamId" />
+
+                </div>
+
+            </div>
+
+            <!-- TABLE -->
+            <div>
+
+                <div style="
+                    display:flex;
+                    align-items:center;
+                    gap:12px;
+                    margin-bottom:22px;">
+
+                    <div style="
+                        width:50px;
+                        height:50px;
+                        border-radius:16px;
+                        background:linear-gradient(135deg,#7c3aed,#6d28d9);
+                        display:flex;
+                        align-items:center;
+                        justify-content:center;
+                        color:white;
+                        font-size:22px;">
+
+                        🏆
+
+                    </div>
+
+                    <div>
+
+                        <h2 style="
+                            color:white;
+                            margin:0;
+                            font-size:34px;
+                            font-weight:900;">
+
+                            League Table
+
+                        </h2>
+
+                        <div style="
+                            color:#94a3b8;">
+
+                            ترتيب الدوري الإنجليزي
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div style="
+                    background:#111827;
+                    border-radius:28px;
+                    overflow:hidden;
+                    border:1px solid rgba(255,255,255,.05);
+                    box-shadow:0 15px 35px rgba(0,0,0,.3);">
+
+                    <table style="
+                        width:100%;
+                        border-collapse:collapse;">
+
+                        <thead>
+
+
+                            <tr style="
+                                background:linear-gradient(135deg,#2563eb,#1d4ed8);">
+
+                                <th style="
+                                    padding:22px;
+                                    color:white;
+                                    font-size:16px;
+                                    font-weight:800;">
+
+                                    الترتيب
+
+                                </th>
+
+                                <th style="
+                                    padding:22px;
+                                    color:white;
+                                    font-size:16px;
+                                    font-weight:800;">
+
+                                    الفريق
+
+                                </th>
+
+                                <th style="
+                                    padding:22px;
+                                    color:white;
+                                    font-size:16px;
+                                    font-weight:800;">
+
+                                    لعب
+
+                                </th>
+
+                                <th style="
+                                    padding:22px;
+                                    color:white;
+                                    font-size:16px;
+                                    font-weight:800;">
+
+                                    له
+                                </th>
+
+                                <th style="
+                                    padding:22px;
+                                    color:white;
+                                    font-size:16px;
+                                    font-weight:800;">
+
+                                    عليه
+                                </th>
+
+                                <th style="
+                                    padding:22px;
+                                    color:white;
+                                    font-size:16px;
+                                    font-weight:800;">
+
+                                    النقاط
+
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            <tr style="
+                                background:#111827;">
+
+                                @foreach (var member in teamInformation.TeamOrder.Values)
+                                {
+                                    <td style="
+                                            padding:24px;
+                                            color:white;
+                                            text-align:center;
+                                            font-size:18px;
+                                            font-weight:700;
+                                            border-bottom:1px solid rgba(255,255,255,.04);">
+
+                                        @member
+
+                                    </td>
+                                }
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+}
 
 @code {
+
     private Models.TeamInformation? teamInformation;
+
     private bool IsLoading => teamInformation == null;
 
     [Parameter]
@@ -42,14 +354,17 @@
     protected override async Task OnInitializedAsync()
     {
         teamInformation = TeamInformationGlobal.TeamInformation;
+
         if (teamInformation == null)
         {
             await LoadTeamInformation();
         }
     }
+
     public async Task LoadTeamInformation()
     {
         teamInformation = await CrawlService.GetTeamInformationAsync(TeamId);
+
         TeamInformationGlobal.TeamInformation = teamInformation;
     }
 

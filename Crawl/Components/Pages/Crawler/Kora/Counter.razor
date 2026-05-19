@@ -1,117 +1,291 @@
 ﻿@page "/counter"
 
-@using System.Text.Json;
 @using System.Text.RegularExpressions;
-@using System.Threading.Tasks
 @using Crawl.Components.Pages
 @using Crawl.Services.Crawl
 @using Services
 @rendermode InteractiveServer
+
 @inject CrawlService CrawlService
-@inject IJSRuntime JS
 @inject NavigationManager Navigation
-@inject TeamInformationGlobal TeamInfo
-<PageTitle>Matches</PageTitle>
 
-<div class="container py-4">
+<PageTitle>المباريات</PageTitle>
 
-    <h1 class="text-center fw-bold mb-4">⚽ جميع المباريات
-        <button class="btn btn-outline-dark px-4" @onclick="GoToArticles">الأخبار 📰 </button>
+<div style="
+background:#0f172a;
+min-height:100vh;
+padding:35px;">
 
-    </h1>
-    
-    <!-- Top Controls -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-body d-flex flex-wrap gap-2 justify-content-center">
-            <button class="btn btn-outline-primary px-4" @onclick="today">Today</button>
-            <button class="btn btn-outline-secondary px-4" @onclick="yesterday">Yesterday</button>
-            <button class="btn btn-outline-info px-4" @onclick="tommorrow">Tomorrow</button>
+    <!-- HEADER -->
+    <div style="
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:35px;
+    flex-wrap:wrap;
+    gap:20px;">
 
-            <button class="btn btn-success px-4 ms-2" @onclick="today">
-                🔄 Refresh
-            </button>
+        <div>
+
+            <div style="
+            display:flex;
+            align-items:center;
+            gap:16px;">
+
+                <div style="
+                width:70px;
+                height:70px;
+                border-radius:22px;
+                background:linear-gradient(135deg,#2563eb,#1d4ed8);
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                font-size:34px;
+                box-shadow:0 10px 25px rgba(37,99,235,.4);">
+
+                    ⚽
+
+                </div>
+
+                <div>
+
+                    <h1 style="
+                    color:white;
+                    margin:0;
+                    font-size:48px;
+                    font-weight:900;
+                    letter-spacing:-1px;">
+
+                        جميع المباريات
+
+                    </h1>
+
+                    <div style="
+                    color:#94a3b8;
+                    font-size:18px;
+                    margin-top:5px;">
+
+                        مباريات مباشرة ونتائج وإحصائيات
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <button @onclick="GoToArticles"
+                style="
+                border:none;
+                background:linear-gradient(135deg,#7c3aed,#6d28d9);
+                color:white;
+                padding:14px 26px;
+                border-radius:18px;
+                font-size:16px;
+                font-weight:800;
+                box-shadow:0 10px 30px rgba(124,58,237,.35);">
+
+            📰 الأخبار
+
+        </button>
+
+    </div>
+
+    <!-- FILTERS -->
+    <div style="
+    background:rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.06);
+    border-radius:28px;
+    padding:24px;
+    margin-bottom:35px;
+    backdrop-filter:blur(14px);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:18px;">
+
+        <div style="
+        display:flex;
+        gap:12px;
+        flex-wrap:wrap;">
+
+            @if (current == 0)
+            {
+                <button @onclick="today"  style=" border:none;
+                        background:#2563eb;
+                        color:white;
+                        padding:13px 22px;
+                        border-radius:14px;
+                        font-weight:700;">
+
+                    اليوم
+
+                </button>
+            }
+            else
+            {
+                <button @onclick="today" style=" border:none;
+                        background:#1e293b;
+                        color:white;
+                        padding:13px 22px;
+                        border-radius:14px;
+                        font-weight:700;">
+
+                    اليوم
+
+                </button>
+            }
+
+            @if (current == -1)
+            {
+                <button @onclick="yesterday"
+                        style="
+                        border:none;
+                        background:#2563eb;
+                        color:#e2e8f0;
+                        padding:13px 22px;
+                        border-radius:14px;
+                        font-weight:700;">
+
+                    الأمس
+
+                </button>
+            }
+            else
+            {
+                <button @onclick="yesterday"
+                        style="
+                        border:none;
+                        background:#1e293b;
+                        color:#e2e8f0;
+                        padding:13px 22px;
+                        border-radius:14px;
+                        font-weight:700;">
+
+                    الأمس
+
+                </button>
+            }
+
+            @if(current == 1)
+            {
+                <button @onclick="tommorrow"
+                        style="
+                            border:none;
+                            background:#2563eb;
+                            color:#e2e8f0;
+                            padding:13px 22px;
+                            border-radius:14px;
+                            font-weight:700;">
+
+                    الغد
+
+                </button>
+            }
+            else
+            {
+                <button @onclick="tommorrow"
+                        style="
+                            border:none;
+                            background:#1e293b;
+                            color:#e2e8f0;
+                            padding:13px 22px;
+                            border-radius:14px;
+                            font-weight:700;">
+
+                    الغد
+
+                </button>
+            }
+          
+
+        </div>
+
+        <div style="
+        display:flex;
+        gap:12px;
+        flex-wrap:wrap;">
 
             <input type="date"
-                   class="form-control w-auto ms-3"
-                   style="min-width:180px"
                    @bind="SelectedDate"
-                   @bind:format="yyyy-MM-dd" />
+                   @bind:format="yyyy-MM-dd"
+                   style="
+                   background:#111827;
+                   border:1px solid #334155;
+                   color:white;
+                   padding:13px 18px;
+                   border-radius:14px;
+                   min-width:190px;" />
 
-            <button class="btn btn-dark px-4" @onclick="searchforday">
-                Search
+            <button @onclick="searchforday"
+                    style="
+                    border:none;
+                    background:linear-gradient(135deg,#10b981,#059669);
+                    color:white;
+                    padding:13px 24px;
+                    border-radius:14px;
+                    font-weight:700;">
+
+                🔍 ابحث 
+
             </button>
 
         </div>
+
     </div>
-    
+
     <Matches Partitiones="@Partitiones" />
+
 </div>
 
-
-
 @code {
-    private int currentCount = 0;
+
     [Parameter]
-    public List<Models.Partition> Partitiones { get; set; } = new List<Models.Partition>();
+    public List<Models.Partition> Partitiones { get; set; } = new();
 
     string todaydate = DateTime.Now.ToString("yyyy-MM-dd");
     string tommorrowdate = DateTime.Now.AddDays(1).ToString("yyyy-MM-dd");
     string yesterdaydate = DateTime.Now.AddDays(-1).ToString("yyyy-MM-dd");
-
+    public int current = 0;
     private DateTime SelectedDate = DateTime.Now;
-
 
     private string FormattedDate =>
         SelectedDate.ToString("yyyy-MM-dd");
+
     protected override async Task OnInitializedAsync()
     {
         Partitiones = await CrawlService.RunSearchDayAsync(todaydate);
-    }
-    protected override Task OnAfterRenderAsync(bool firstRender)
-    {
-        return base.OnAfterRenderAsync(firstRender);
+        current = 0;
     }
 
-    private void IncrementCount()
-    {
-        currentCount++;
-    }
-    public DateTime ToDateTime(string dotNetDate)
-    {
-        if (string.IsNullOrEmpty(dotNetDate))
-            return DateTime.MinValue;
-
-        var match = Regex.Match(dotNetDate, @"\d+");
-        if (!match.Success)
-            return DateTime.MinValue;
-
-        long ms = long.Parse(match.Value);
-        return DateTimeOffset
-            .FromUnixTimeMilliseconds(ms)
-            .LocalDateTime;
-    }
     public async Task tommorrow()
     {
         Partitiones = await CrawlService.RunSearchDayAsync(tommorrowdate);
-
+        current = 1;
     }
+
     public async Task yesterday()
     {
         Partitiones = await CrawlService.RunSearchDayAsync(yesterdaydate);
-
+        current = -1;
     }
+
     public async Task today()
     {
         Partitiones = await CrawlService.RunSearchDayAsync(todaydate);
+        current = 0;
     }
+
     public async Task searchforday()
     {
         Partitiones = await CrawlService.RunSearchDayAsync(FormattedDate);
+        current = 2;
     }
-    public async Task GoToArticles()
+
+    public void GoToArticles()
     {
         Navigation.NavigateTo("/articles");
     }
-
 
 }

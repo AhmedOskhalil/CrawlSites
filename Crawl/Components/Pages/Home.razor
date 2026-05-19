@@ -1,7 +1,141 @@
 ﻿@page "/"
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Crawl</PageTitle>
 
-<h1>Hello, world!</h1>
+<div class="home-container">
 
-Welcome to your new app.
+    <div class="hero-section">
+
+        <div class="hero-content">
+
+            <h1 class="hero-badge">
+                <i class="fas fa-bolt"></i>
+                منصة خليل الكروية    
+            </h1>
+
+            <h1>
+                تابع المباريات مباشرة
+                <span>وآخر التقارير</span>
+            </h1>
+
+            <p>
+                نتائج مباريات كرة القدم مباشرة، معلومات الفرق،
+                إحصائيات المباريات وأحدث الأخبار الرياضية في مكان واحد.
+            </p>
+
+            <div class="hero-buttons">
+
+                <NavLink href="/counter" class="hero-btn primary-btn">
+                    <i class="fas fa-futbol"></i>
+                    ⚽ المباريات
+                </NavLink>
+
+                <NavLink href="/articles" class="hero-btn secondary-btn">
+                    <i class="fas fa-newspaper"></i>
+                    الأخبار 📰
+                </NavLink>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<style>
+    .home-container {
+        min-height: 100vh;
+        background: linear-gradient(rgba(15,23,42,.85), rgba(15,23,42,.95)), url('https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=1600&auto=format&fit=crop');
+        background-size: cover;
+        background-position: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+    }
+
+    .hero-section {
+        width: 100%;
+        max-width: 900px;
+    }
+
+    .hero-content {
+        color: white;
+    }
+
+    .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 18px;
+        border-radius: 999px;
+        background: rgba(255,255,255,.12);
+        margin-bottom: 25px;
+        font-weight: 600;
+        backdrop-filter: blur(8px);
+    }
+
+    .hero-content h1 {
+        font-size: 72px;
+        font-weight: 900;
+        line-height: 1.1;
+        margin-bottom: 20px;
+    }
+
+        .hero-content h1 span {
+            color: #60a5fa;
+        }
+
+    .hero-content p {
+        font-size: 22px;
+        color: #d1d5db;
+        max-width: 700px;
+        line-height: 1.8;
+        margin-bottom: 35px;
+    }
+
+    .hero-buttons {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+
+    .hero-btn {
+        padding: 16px 28px;
+        border-radius: 14px;
+        text-decoration: none;
+        font-size: 18px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        transition: .25s ease;
+    }
+
+    .primary-btn {
+        background: #2563eb;
+        color: white;
+    }
+
+    .secondary-btn {
+        background: rgba(255,255,255,.1);
+        color: white;
+        border: 1px solid rgba(255,255,255,.1);
+    }
+
+    .hero-btn:hover {
+        transform: translateY(-3px);
+    }
+
+    @@media(max-width:768px) {
+
+        .hero-content h1 {
+            font-size: 42px;
+        }
+
+        .hero-content p {
+            font-size: 18px;
+        }
+    }
+</style>
