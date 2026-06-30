@@ -1,4 +1,5 @@
 ﻿@using Crawl.Models
+@using Crawl.Models.Matches
 @using Crawl.Services
 @using Crawl.Services.Crawl
 
@@ -271,7 +272,7 @@ else
 
 @code {
 
-    public Models.TeamMatches teamMatches = new();
+    public Models.Matches.TeamMatches teamMatches = new();
 
     public bool showRecent = false;
 
@@ -284,7 +285,7 @@ else
             ? teamId
             : TeamInfo.TeamInformation.teamId;
 
-        teamMatches.Matches = new List<Models.Match>();
+        teamMatches.Matches = new List<Match>();
 
         await LoadMatches();
     }

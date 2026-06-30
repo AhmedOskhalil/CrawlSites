@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.Options;
 using Crawl.Services.Crawl;
+using Crawl.Models.Login;
 
 
 var builder = WebApplication.CreateBuilder(args);

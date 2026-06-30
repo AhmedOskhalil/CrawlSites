@@ -1,442 +1,574 @@
-﻿using Azure;
-using Crawl.Components.Pages;
-using Crawl.Models;
+﻿using Crawl.Models;
+using Crawl.Models.Articles;
+using Crawl.Models.Matches;
+using Crawl.Models.Vidoes;
 using HtmlAgilityPack;
-using System.Text.Json;
-using static System.Net.Mime.MediaTypeNames;
-
-
 
 namespace Crawl.Services.Crawl
 {
     public class CrawlService
     {
-        private static readonly HttpClient _httpClient = new HttpClient();
+        private static readonly HttpClient _httpClient = new();
+
+        private const string BaseUrl = "https://www.filgoal.com";
+
+        public CrawlService()
+        {
+            if (!_httpClient.DefaultRequestHeaders.Contains("referer"))
+            {
+                _httpClient.DefaultRequestHeaders.Add("referer", "https://www.google.com/");
+            }
+
+            if (!_httpClient.DefaultRequestHeaders.Contains("user-agent"))
+            {
+                _httpClient.DefaultRequestHeaders.Add(
+                    "user-agent",
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"
+                );
+            }
+        }
+
+        #region Matches
 
         public async Task<List<Partition>> RunSearchDayAsync(string date)
         {
-            var url = $"https://www.filgoal.com/matches/?date={date}";
-
-            var request = new HttpRequestMessage(HttpMethod.Get, url);
-
-            // Headers
-
-            request.Headers.Add("referer", "https://www.google.com/");
-            request.Headers.Add("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36");
-
-            var response = await _httpClient.SendAsync(request);
-            response.EnsureSuccessStatusCode();
-
-            var html = await response.Content.ReadAsStringAsync();
-
-
-            //extract elements by parsing the html 
-            var doc = new HtmlDocument();
-            doc.LoadHtml(html);
-
-            List<Partition> partitionMatches = new List<Partition>();
-            var nodes = doc.DocumentNode.SelectNodes("//div[@class='mc-block']");
-            int i = 0;
-            foreach (var node in nodes)
+            try
             {
-                if (i == 0)
+                var html = await GetHtmlAsync($"{BaseUrl}/matches/?date={date}");
+
+                var doc = LoadDocument(html);
+
+                var matchBlocks = doc.DocumentNode
+                    .SelectNodes("//div[@class='mc-block']");
+
+                var partitions = new List<Partition>();
+
+                if (matchBlocks == null)
+                    return partitions;
+
+                foreach (var block in matchBlocks.Skip(1))
                 {
-                    i++;
-                    continue;
-                }
+                    var blockDoc = LoadDocument(block.InnerHtml);
 
-                List<Match> htmlMatches = new List<Match>();
-                var PartitionhDoc = new HtmlDocument();
-                PartitionhDoc.LoadHtml(node.InnerHtml);
-                var partitionName = PartitionhDoc.DocumentNode.SelectSingleNode("//h6")?.InnerText.Trim();
-                var partitionMatcheshtml = PartitionhDoc.DocumentNode.SelectNodes("//div[@class='cin_cntnr']");
-
-                foreach (var matchnode in partitionMatcheshtml)
-                {
-                    var matchDoc = new HtmlDocument();
-                    matchDoc.LoadHtml(matchnode.InnerHtml);
-
-#pragma warning disable CS8601 // Possible null reference assignment.
-                    htmlMatches.Add(new Match()
+                    var partition = new Partition
                     {
-                        HomeTeamName = matchDoc.DocumentNode.SelectSingleNode("//div[@class='s']//strong")?.InnerText.Trim(),
+                        PartitionName = blockDoc.DocumentNode
+                            .SelectSingleNode("//h6")
+                            ?.InnerText
+                            .Trim(),
 
-                        AwayTeamName = matchDoc.DocumentNode.SelectSingleNode("//div[@class='f']//strong")?.InnerText.Trim(),
+                        Matchs = ParseMatches(
+                            blockDoc.DocumentNode.SelectNodes("//div[@class='cin_cntnr']")
+                        )
+                    };
 
-                        HomeScore = matchDoc.DocumentNode.SelectSingleNode("//div[@class='s']//b")?.InnerText.Trim(),
-
-                        Date = (matchDoc.DocumentNode.SelectSingleNode("//span[2]").InnerText.Contains(":") ?
-                        matchDoc.DocumentNode.SelectSingleNode("//span[2]").InnerText :
-                        (matchDoc.DocumentNode.SelectSingleNode("//span[3]").InnerText.Contains(":") ?
-                        matchDoc.DocumentNode.SelectSingleNode("//span[3]").InnerText : matchDoc.DocumentNode.SelectSingleNode("//span[4]").InnerText)),
-
-                        AwayScore = matchDoc.DocumentNode.SelectSingleNode("//div[@class='f']//b")?.InnerText.Trim(),
-
-                        HomeLogo = matchDoc.DocumentNode.SelectSingleNode("//div[@class='s']//img")?.GetAttributeValue("data-src", null) is string h
-                                ? "http:" + h
-                                : null,
-
-                        AwayLogo = matchDoc.DocumentNode.SelectSingleNode("//div[@class='f']//img")?.GetAttributeValue("data-src", null) is string a
-                                ? "http:" + a
-                                : null
-                    });
-#pragma warning restore CS8601 // Possible null reference assignment.
+                    partitions.Add(partition);
                 }
-                partitionMatches.Add(new Partition()
-                {
-                    PartitionName = partitionName,
-                    Matchs = htmlMatches
-                });
+
+                return partitions;
             }
-
-
-
-            return partitionMatches;
+            catch (Exception ex)
+            {
+                Console.WriteLine($"RunSearchDayAsync Error: {ex.Message}");
+                return new List<Partition>();
+            }
         }
-        public async Task<TeamInformation> GetTeamInformationAsync(int teamId)
+
+        public async Task<TeamMatches?> GetTeamMatchesAsync(int teamId)
         {
             try
             {
-                var url = $"https://www.filgoal.com/teams/{teamId}";
+                var html = await GetHtmlAsync($"{BaseUrl}/teams/{teamId}/matches-results");
 
-                var request = new HttpRequestMessage(HttpMethod.Get, url);
-                request.Headers.Add("referer", "https://www.google.com/");
-                request.Headers.Add("user-agent",
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
-                    "(KHTML, like Gecko) Chrome/120.0 Safari/537.36");
+                var doc = LoadDocument(html);
 
-                var response = await _httpClient.SendAsync(request);
-                response.EnsureSuccessStatusCode();
-
-                var html = await response.Content.ReadAsStringAsync();
-
-                var doc = new HtmlDocument();
-                doc.LoadHtml(html);
-
-                var team = new TeamInformation();
-                team.RecentMatches = new List<RecentMatch>();
-
-                team.TeamName = doc.DocumentNode.SelectSingleNode("//h1")?.InnerText?.Trim();
-
-                var logoNode = doc.DocumentNode
-                    .SelectSingleNode("//img[contains(@class,'logo')]");
-
-                team.TeamLogo = logoNode?.GetAttributeValue("src", null);
-
-                if (!string.IsNullOrEmpty(team.TeamLogo) && team.TeamLogo.StartsWith("//"))
-                    team.TeamLogo = "https:" + team.TeamLogo;
-                team.TeamOrder ??= new TeamOrder();
-                team.TeamOrder.Values = Array.Empty<string>();
-                var orderNodes = doc.DocumentNode.SelectNodes("//div[contains(@data-group-id, '#')]");
-                
-                foreach (var orderNode in orderNodes)
+                var teamMatches = new TeamMatches
                 {
-                    var orderValueInfo = orderNode?.SelectSingleNode(".//div[@class='fg_rw s']")?.SelectNodes(".//div");
-                    team.TeamOrder.Values = orderValueInfo?.Select(h => h.InnerText.Trim()).ToArray() ?? Array.Empty<string>();
-                    break;
+                    TeamName = doc.DocumentNode
+                        .SelectSingleNode("//h1")
+                        ?.InnerText
+                        .Trim(),
+
+                    TeamLogo = doc.DocumentNode
+                        .SelectSingleNode("//h1/a/img")
+                        ?.GetAttributeValue("src", null),
+
+                    Matches = ParseMatches(
+                        doc.DocumentNode.SelectNodes("//div[@class='cin_cntnr']")
+                    )
+                };
+
+                var featureMatches = await GetMatchesFeature(teamId);
+
+                if (featureMatches != null)
+                {
+                    teamMatches.Matches.AddRange(featureMatches);
                 }
 
+                return teamMatches;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"GetTeamMatchesAsync Error: {ex.Message}");
+                return null;
+            }
+        }
 
-                var matchNodes = doc.DocumentNode
+        public async Task<List<Match>?> GetMatchesFeature(int teamId)
+        {
+            try
+            {
+                var html = await GetHtmlAsync($"{BaseUrl}/teams/{teamId}/matches-fixtures");
+
+                var doc = LoadDocument(html);
+
+                var matches = ParseMatches(
+                    doc.DocumentNode.SelectNodes("//div[@class='cin_cntnr']")
+                );
+
+                foreach (var match in matches)
+                {
+                    match.IsFeatureMatch = true;
+                }
+
+                return matches;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"GetMatchesFeature Error: {ex.Message}");
+                return null;
+            }
+        }
+
+        #endregion
+
+        #region Team Information
+
+        public async Task<TeamInformation?> GetTeamInformationAsync(int teamId)
+        {
+            try
+            {
+                var html = await GetHtmlAsync($"{BaseUrl}/teams/{teamId}");
+
+                var doc = LoadDocument(html);
+
+                var team = new TeamInformation
+                {
+                    teamId = teamId,
+                    TeamName = doc.DocumentNode
+                        .SelectSingleNode("//h1")
+                        ?.InnerText
+                        ?.Trim(),
+
+                    TeamLogo = FixImageUrl(
+                        doc.DocumentNode
+                        .SelectSingleNode("//img[contains(@class,'logo')]")
+                        ?.GetAttributeValue("src", null)
+                    ),
+
+                    RecentMatches = new List<RecentMatch>(),
+
+                    TeamOrder = new TeamOrder
+                    {
+                        Values = Array.Empty<string>()
+                    }
+                };
+
+                var orderNodes = doc.DocumentNode
+                    .SelectNodes("//div[contains(@data-group-id, '#')]");
+
+                if (orderNodes != null)
+                {
+                    foreach (var node in orderNodes)
+                    {
+                        var values = node
+                            .SelectSingleNode(".//div[@class='fg_rw s']")
+                            ?.SelectNodes(".//div");
+
+                        team.TeamOrder.Values = values?
+                            .Select(x => x.InnerText.Trim())
+                            .ToArray()
+                            ?? Array.Empty<string>();
+
+                        break;
+                    }
+                }
+
+                var recentMatchNodes = doc.DocumentNode
                     .SelectNodes("//div[@class='cmim']");
 
-                if (matchNodes != null)
+                if (recentMatchNodes != null)
                 {
-                    foreach (var node in matchNodes.Take(2))
+                    foreach (var node in recentMatchNodes.Take(2))
                     {
-                        var matchDoc = new HtmlDocument();
-                        matchDoc.LoadHtml(node.InnerHtml);
+                        var matchDoc = LoadDocument(node.InnerHtml);
 
-                        var match = new RecentMatch
+                        var teams = matchDoc.DocumentNode
+                            .SelectNodes("//div[@class='mims']");
+
+                        if (teams == null || teams.Count < 2)
+                            continue;
+
+                        var recentMatch = new RecentMatch
                         {
                             HomeTeamName = team.TeamName,
 
-                            AwayTeamName = matchDoc.DocumentNode.SelectSingleNode("//div[@class='mims']")?.InnerText.Trim().Split("      ")[^1] != team.TeamName ?
-                            matchDoc.DocumentNode.SelectSingleNode("//div[@class='mims']")?.InnerText.Trim().Split("      ")[^1] :
-                            matchDoc.DocumentNode.SelectNodes("//div[@class='mims']")[1]?.InnerText.Trim().Split("      ")[^1],
+                            AwayTeamName =
+                                teams[0].InnerText.Trim().Split("      ")[^1] != team.TeamName
+                                ? teams[0].InnerText.Trim().Split("      ")[^1]
+                                : teams[1].InnerText.Trim().Split("      ")[^1],
 
-                            MatchResult = matchDoc.DocumentNode.SelectSingleNode("//div[@class='mims']").InnerText.Trim()[0]
-                                + " - " + matchDoc.DocumentNode.SelectNodes("//div[@class='mims']")[1]?.InnerText.Trim()[0],
+                            MatchResult =
+                                $"{teams[0].InnerText.Trim()[0]} - {teams[1].InnerText.Trim()[0]}",
 
-                            MatchDate = matchDoc.DocumentNode.SelectSingleNode("//span[contains(text(),':')]")?.InnerText.Trim(),
+                            MatchDate = matchDoc.DocumentNode
+                                .SelectSingleNode("//span[contains(text(),':')]")
+                                ?.InnerText
+                                .Trim(),
 
-                            HomeTeamLogo = matchDoc.DocumentNode.SelectSingleNode("//div[@class='s']//img")?.GetAttributeValue("data-src", null),
+                            HomeTeamLogo = FixImageUrl(
+                                matchDoc.DocumentNode
+                                .SelectSingleNode("//div[@class='s']//img")
+                                ?.GetAttributeValue("data-src", null)
+                            ),
 
-                            AwayTeamLogo = matchDoc.DocumentNode.SelectSingleNode("//div[@class='f']//img")?.GetAttributeValue("data-src", null)
+                            AwayTeamLogo = FixImageUrl(
+                                matchDoc.DocumentNode
+                                .SelectSingleNode("//div[@class='f']//img")
+                                ?.GetAttributeValue("data-src", null)
+                            )
                         };
 
-                        if (!string.IsNullOrEmpty(match.HomeTeamLogo) && match.HomeTeamLogo.StartsWith("//"))
-                            match.HomeTeamLogo = "http:" + match.HomeTeamLogo;
-
-                        if (!string.IsNullOrEmpty(match.AwayTeamLogo) && match.AwayTeamLogo.StartsWith("//"))
-                            match.AwayTeamLogo = "http:" + match.AwayTeamLogo;
-
-                        team.RecentMatches.Add(match);
+                        team.RecentMatches.Add(recentMatch);
                     }
                 }
-                team.teamId = teamId;
+
                 return team;
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.ToString());
+                Console.WriteLine($"GetTeamInformationAsync Error: {ex.Message}");
                 return null;
             }
-           
         }
 
-        public async Task<Models.TeamMatches> GetTeamMatchesAsync(int teamId)
+        #endregion
+
+        #region Articles
+
+        public async Task<List<Article>?> GetArticlesAsync()
         {
             try
             {
-                #region RecentMatches
-                var url = $"https://www.filgoal.com/teams/{teamId}/matches-results";
-                var request = new HttpRequestMessage(HttpMethod.Get, url);
-                request.Headers.Add("referer", "https://www.google.com/");
-                request.Headers.Add("user-agent",
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36");
-                var response = await _httpClient.SendAsync(request);
-                response.EnsureSuccessStatusCode();
-                var html = await response.Content.ReadAsStringAsync();
-                var doc = new HtmlDocument();
-                doc.LoadHtml(html);
-                var TeamMatches = new Models.TeamMatches();
-                TeamMatches.TeamName = doc.DocumentNode.SelectSingleNode("//h1")?.InnerText?.Trim();
-                TeamMatches.TeamLogo = doc.DocumentNode.SelectSingleNode("//h1/a/img")?.GetAttributeValue("src", null);
-                var matchNodes = doc.DocumentNode.SelectNodes("//div[@class='cin_cntnr']");
-                var teamMatches = new List<Match>();
-                foreach (var matchNode in matchNodes)
-                {
-                    var match = new Models.Match();
-                    var matchDoc = new HtmlDocument();
-                    matchDoc.LoadHtml(matchNode.InnerHtml);
-                    teamMatches.Add(new Match()
-                    {
-                        HomeTeamName = matchDoc.DocumentNode.SelectSingleNode("//div[@class='s']//strong")?.InnerText.Trim(),
+                var html = await GetHtmlAsync($"{BaseUrl}/articles");
 
-                        AwayTeamName = matchDoc.DocumentNode.SelectSingleNode("//div[@class='f']//strong")?.InnerText.Trim(),
-
-                        HomeScore = matchDoc.DocumentNode.SelectSingleNode("//div[@class='s']//b")?.InnerText.Trim(),
-
-                        Date = (matchDoc.DocumentNode.SelectSingleNode("//span[2]").InnerText.Contains(":") ?
-                         matchDoc.DocumentNode.SelectSingleNode("//span[2]").InnerText :
-                         (matchDoc.DocumentNode.SelectSingleNode("//span[3]").InnerText.Contains(":") ?
-                         matchDoc.DocumentNode.SelectSingleNode("//span[3]").InnerText : matchDoc.DocumentNode.SelectSingleNode("//span[4]").InnerText)),
-
-                        AwayScore = matchDoc.DocumentNode.SelectSingleNode("//div[@class='f']//b")?.InnerText.Trim(),
-
-                        HomeLogo = matchDoc.DocumentNode.SelectSingleNode("//div[@class='s']//img")?.GetAttributeValue("data-src", null) is string h ? "http:" + h : null,
-
-                        AwayLogo = matchDoc.DocumentNode.SelectSingleNode("//div[@class='f']//img")?.GetAttributeValue("data-src", null) is string a ? "http:" + a : null,
-                        Partition = new Partition()
-                        {
-                            PartitionName = matchDoc.DocumentNode.SelectSingleNode("//div[@class='cin_cntnr']//a")?.InnerText.Trim()
-
-                        }
-
-                    });
-                }
-                TeamMatches.Matches = teamMatches;
-                #endregion
-                var featureMatches = await this.GetMatchesFeature(teamId);
-                if (featureMatches != null)
-                    foreach (var match in featureMatches)
-                        TeamMatches.Matches.Add(match);
-
-                return TeamMatches;
+                return ParseArticles(html);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error in GetMatchDetailsAsync: {ex.Message}");
+                Console.WriteLine($"GetArticlesAsync Error: {ex.Message}");
                 return null;
             }
-
         }
 
-        public async Task<List<Match>> GetMatchesFeature(int teamId)
+        public async Task<List<Article>?> GetTeamArticles(string teamName)
         {
             try
             {
-                #region featurematch
-                var furl = $"https://www.filgoal.com/teams/{teamId}/matches-fixtures";
-                var frequest = new HttpRequestMessage(HttpMethod.Get, furl);
-                frequest.Headers.Add("referer", "https://www.google.com/");
-                frequest.Headers.Add("user-agent",
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36");
-                var fresponse = await _httpClient.SendAsync(frequest);
-                fresponse.EnsureSuccessStatusCode();
-                var fhtml = await fresponse.Content.ReadAsStringAsync();
-                var fdoc = new HtmlDocument();
-                fdoc.LoadHtml(fhtml);
-                var matchNodesfeature = fdoc.DocumentNode.SelectNodes("//div[@class='cin_cntnr']");
-                var teamMatchesfeature = new List<Match>();
-                foreach (var matchNode in matchNodesfeature)
-                {
-                    var fmatchDoc = new HtmlDocument();
-                    fmatchDoc.LoadHtml(matchNode.InnerHtml);
-                    teamMatchesfeature.Add(new Match()
-                    {
-                        HomeTeamName = fmatchDoc.DocumentNode.SelectSingleNode("//div[@class='s']//strong")?.InnerText.Trim(),
+                var html = await GetHtmlAsync(
+                    $"{BaseUrl}/search/filter?keyword={teamName}"
+                );
 
-                        AwayTeamName = fmatchDoc.DocumentNode.SelectSingleNode("//div[@class='f']//strong")?.InnerText.Trim(),
-
-                        HomeScore = fmatchDoc.DocumentNode.SelectSingleNode("//div[@class='s']//b")?.InnerText.Trim(),
-
-                        Date = (fmatchDoc.DocumentNode.SelectSingleNode("//span[2]").InnerText.Contains(":") ?
-                         fmatchDoc.DocumentNode.SelectSingleNode("//span[2]").InnerText :
-                         (fmatchDoc.DocumentNode.SelectSingleNode("//span[3]").InnerText.Contains(":") ?
-                         fmatchDoc.DocumentNode.SelectSingleNode("//span[3]").InnerText : fmatchDoc.DocumentNode.SelectSingleNode("//span[4]").InnerText)),
-
-                        AwayScore = fmatchDoc.DocumentNode.SelectSingleNode("//div[@class='f']//b")?.InnerText.Trim(),
-
-                        HomeLogo = fmatchDoc.DocumentNode.SelectSingleNode("//div[@class='s']//img")?.GetAttributeValue("data-src", null) is string h ? "http:" + h : null,
-
-                        AwayLogo = fmatchDoc.DocumentNode.SelectSingleNode("//div[@class='f']//img")?.GetAttributeValue("data-src", null) is string a ? "http:" + a : null,
-                        Partition = new Partition()
-                        {
-                            PartitionName = fmatchDoc.DocumentNode.SelectSingleNode("//div[@class='cin_cntnr']//a")?.InnerText.Trim()
-
-                        },
-                        IsFeatureMatch = true
-                    });
-
-                }
-                return teamMatchesfeature;
-                #endregion
-
+                return ParseArticles(html);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error in GetMatchesFeature: {ex.Message}");
+                Console.WriteLine($"GetTeamArticles Error: {ex.Message}");
                 return null;
             }
         }
 
-        public async Task<List<Article>> GetArticlesAsync()
+        public async Task<ArticleContent?> GetArticleContentAsync(string articleUrl)
         {
             try
             {
-                var furl = $"https://www.filgoal.com/articles";
-                var frequest = new HttpRequestMessage(HttpMethod.Get, furl);
-                frequest.Headers.Add("referer", "https://www.google.com/");
-                frequest.Headers.Add("user-agent",
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36");
-                var fresponse = await _httpClient.SendAsync(frequest);
-                fresponse.EnsureSuccessStatusCode();
-                var fhtml = await fresponse.Content.ReadAsStringAsync();
-                var fdoc = new HtmlDocument();
-                fdoc.LoadHtml(fhtml);
-                var matchNodesfeature = fdoc.DocumentNode.SelectNodes("//main//li");
-                var articles = new List<Article>();
-                foreach (var matchNode in matchNodesfeature)
+                var html = await GetHtmlAsync($"{BaseUrl}{articleUrl}");
+
+                var doc = LoadDocument(html);
+
+                var article = new ArticleContent
                 {
-                    var fmatchDoc = new HtmlDocument();
-                    fmatchDoc.LoadHtml(matchNode.InnerHtml);
-                    articles.Add(new Article()
+                    Title = doc.DocumentNode
+                        .SelectSingleNode("//div[@class='title']//h1")
+                        ?.InnerText
+                        .Trim(),
+
+                    Text = doc.DocumentNode
+                        .SelectSingleNode("//div[@id='details_content']")
+                        ?.InnerText
+                        .Trim(),
+
+                    PublishedDate = doc.DocumentNode
+                        .SelectSingleNode("//div[@class='title']//p")
+                        ?.InnerText
+                        .Trim(),
+
+                    Author = doc.DocumentNode
+                        .SelectSingleNode("//div[@class='title']//p[2]")
+                        ?.InnerText
+                        .Trim(),
+
+                    Images = doc.DocumentNode
+                        .SelectNodes("//div[@class='details']//img")?
+                        .Select(x => FixImageUrl(
+                            x.GetAttributeValue("data-src", null)
+                        ))
+                        .ToArray(),
+
+                    RelatedArticles = new List<RelatedArticle>()
+                };
+
+                var relatedNodes = doc.DocumentNode
+                    .SelectNodes("//div[@class='ntva_box_list']//a");
+
+                if (relatedNodes != null)
+                {
+                    foreach (var node in relatedNodes)
                     {
-                        Title = fmatchDoc.DocumentNode.SelectSingleNode("//h6")?.InnerText.Trim(),
+                        var relatedDoc = LoadDocument(node.InnerHtml);
 
-                        Url = fmatchDoc.DocumentNode.SelectSingleNode("//a")?.GetAttributeValue("href", null),
-                        imageUrl = fmatchDoc.DocumentNode.SelectSingleNode("//img")?.GetAttributeValue("data-src", null) is string h ? "https:" + h : null,
+                        article.RelatedArticles.Add(new RelatedArticle
+                        {
+                            Title = relatedDoc.DocumentNode
+                                .SelectSingleNode("//span")
+                                ?.InnerText
+                                .Trim(),
 
-                    });
+                            Url = node.GetAttributeValue("href", null),
 
+                            ImageUrl = FixImageUrl(
+                                relatedDoc.DocumentNode
+                                .SelectSingleNode("//img")
+                                ?.GetAttributeValue("data-src", null)
+                            )
+                        });
+                    }
                 }
+
+                return article;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"GetArticleContentAsync Error: {ex.Message}");
+                return null;
+            }
+        }
+
+        #endregion
+
+        #region Helpers
+
+        private async Task<string> GetHtmlAsync(string url)
+        {
+            var response = await _httpClient.GetAsync(url);
+
+            response.EnsureSuccessStatusCode();
+
+            return await response.Content.ReadAsStringAsync();
+        }
+
+        private HtmlDocument LoadDocument(string html)
+        {
+            var doc = new HtmlDocument();
+
+            doc.LoadHtml(html);
+
+            return doc;
+        }
+
+        private List<Article> ParseArticles(string html)
+        {
+            var doc = LoadDocument(html);
+
+            var articleNodes = doc.DocumentNode
+                .SelectNodes("//main//li");
+
+            var articles = new List<Article>();
+
+            if (articleNodes == null)
                 return articles;
 
-            }
-            catch (Exception ex)
+            foreach (var node in articleNodes)
             {
-                Console.WriteLine($"Error in GetArticlesAsync: {ex.Message}");
-                return null;
+                var articleDoc = LoadDocument(node.InnerHtml);
+
+                articles.Add(new Article
+                {
+                    Title = articleDoc.DocumentNode
+                        .SelectSingleNode("//h6")
+                        ?.InnerText
+                        .Trim(),
+
+                    Url = articleDoc.DocumentNode
+                        .SelectSingleNode("//a")
+                        ?.GetAttributeValue("href", null),
+
+                    imageUrl = FixImageUrl(
+                        articleDoc.DocumentNode
+                        .SelectSingleNode("//img")
+                        ?.GetAttributeValue("data-src", null)
+                    )
+                });
             }
+
+            return articles;
         }
 
-        public async Task<Models.ArticleContent> GetArticleContentAsync(string ArticleUrl)
+        private List<Match> ParseMatches(HtmlNodeCollection? matchNodes)
+        {
+            var matches = new List<Match>();
+
+            if (matchNodes == null)
+                return matches;
+
+            foreach (var node in matchNodes)
+            {
+                var doc = LoadDocument(node.InnerHtml);
+
+                matches.Add(new Match
+                {
+                    HomeTeamName = doc.DocumentNode
+                        .SelectSingleNode("//div[@class='s']//strong")
+                        ?.InnerText
+                        .Trim(),
+
+                    AwayTeamName = doc.DocumentNode
+                        .SelectSingleNode("//div[@class='f']//strong")
+                        ?.InnerText
+                        .Trim(),
+
+                    HomeScore = doc.DocumentNode
+                        .SelectSingleNode("//div[@class='s']//b")
+                        ?.InnerText
+                        .Trim(),
+
+                    AwayScore = doc.DocumentNode
+                        .SelectSingleNode("//div[@class='f']//b")
+                        ?.InnerText
+                        .Trim(),
+
+                    Date = GetMatchDate(doc),
+
+                    HomeLogo = FixImageUrl(
+                        doc.DocumentNode
+                        .SelectSingleNode("//div[@class='s']//img")
+                        ?.GetAttributeValue("data-src", null)
+                    ),
+
+                    AwayLogo = FixImageUrl(
+                        doc.DocumentNode
+                        .SelectSingleNode("//div[@class='f']//img")
+                        ?.GetAttributeValue("data-src", null)
+                    ),
+
+                    Partition = new Partition
+                    {
+                        PartitionName = doc.DocumentNode
+                            .SelectSingleNode("//div[@class='cin_cntnr']//a")
+                            ?.InnerText
+                            .Trim()
+                    }
+                });
+            }
+
+            return matches;
+        }
+
+        private string? GetMatchDate(HtmlDocument doc)
+        {
+            var span2 = doc.DocumentNode.SelectSingleNode("//span[2]")?.InnerText;
+            var span3 = doc.DocumentNode.SelectSingleNode("//span[3]")?.InnerText;
+            var span4 = doc.DocumentNode.SelectSingleNode("//span[4]")?.InnerText;
+
+            if (!string.IsNullOrWhiteSpace(span2) && span2.Contains(":"))
+                return span2;
+
+            if (!string.IsNullOrWhiteSpace(span3) && span3.Contains(":"))
+                return span3;
+
+            return span4;
+        }
+
+        private string? FixImageUrl(string? url)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+                return null;
+
+            if (url.StartsWith("//"))
+                return "https:" + url;
+
+            return url;
+        }
+
+        #endregion
+        #region vidoes
+        public async Task<List<VideoItem>> GetVideosAsync()
         {
             try
             {
-                var furl = $"https://www.filgoal.com{ArticleUrl}";
-                var frequest = new HttpRequestMessage(HttpMethod.Get, furl);
-                frequest.Headers.Add("referer", "https://www.google.com/");
-                frequest.Headers.Add("user-agent",
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36");
-                var fresponse = await _httpClient.SendAsync(frequest);
-                fresponse.EnsureSuccessStatusCode();
-                var fhtml = await fresponse.Content.ReadAsStringAsync();
-                var fdoc = new HtmlDocument();
-                fdoc.LoadHtml(fhtml);
-                Models.ArticleContent articleContent = new Models.ArticleContent();
-                articleContent.Title= fdoc.DocumentNode.SelectSingleNode("//div[@class=\"title\"]//h1").InnerText.Trim();
-                articleContent.Text = fdoc.DocumentNode.SelectSingleNode("//div[@id=\"details_content\"]").InnerText.Trim();
-                articleContent.PublishedDate= fdoc.DocumentNode.SelectSingleNode("//div[@class=\"title\"]//p").InnerText.Trim();
-                articleContent.Author= fdoc.DocumentNode.SelectSingleNode("//div[@class=\"title\"]//p[2]")?.InnerText.Trim();
-                articleContent.Images = fdoc.DocumentNode.SelectNodes("//div[@class=\"details\"]//img")?
-                    .Select(img => img.GetAttributeValue("data-src", null) is string h ? "https:" + h : null).ToArray();
+                var html = await GetHtmlAsync("https://www.filgoal.com/videos");
 
-                var relatedArticleNodes = fdoc.DocumentNode.SelectNodes("//div[@class=\"ntva_box_list\"]//a");
-                articleContent.RelatedArticles ??= new List<RelatedArticle>();
-                foreach (var relatedNode in relatedArticleNodes)
+                var doc = LoadDocument(html);
+
+                var videoNodes = doc.DocumentNode
+                    .SelectNodes("//div[@class='vfg_item']");
+
+                var videos = new List<VideoItem>();
+
+                if (videoNodes == null)
+                    return videos;
+
+                foreach (var node in videoNodes)
                 {
-                    var relatedDoc = new HtmlDocument();
-                    relatedDoc.LoadHtml(relatedNode.InnerHtml);
-                    
-                    articleContent.RelatedArticles.Add(new RelatedArticle()
+                    var videoDoc = LoadDocument(node.InnerHtml);
+
+                    var links = videoDoc.DocumentNode.SelectNodes("//a");
+
+                    var video = new VideoItem
                     {
-                        Title = relatedDoc.DocumentNode.SelectSingleNode("//span")?.InnerText.Trim(),
-                        Url = relatedNode.OuterHtml.ToString().Split("href=")[1].Split(">")[0].Split('\"')[1].Trim(),
-                        ImageUrl = relatedDoc.DocumentNode.SelectSingleNode("//img")?.GetAttributeValue("data-src", null) is string h ? "https:" + h : null,
-                    });
+                        Title = videoDoc.DocumentNode
+                            .SelectSingleNode("//span[@itemprop='name']")
+                            ?.InnerText
+                            ?.Trim() ?? "",
+
+                        Url = links?[0]
+                            ?.GetAttributeValue("href", "") ?? "",
+
+                        Thumbnail = FixImageUrl(
+                            videoDoc.DocumentNode
+                            .SelectSingleNode("//img")
+                            ?.GetAttributeValue("data-src", "")
+                        ) ?? "",
+
+                        PublishDate = links?[1]
+                            ?.SelectNodes(".//span")?[1]
+                            ?.InnerText
+                            ?.Trim() ?? ""
+                    };
+
+                    videos.Add(video);
                 }
 
-                return articleContent;
+                return videos;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error in GetArticleContentAsync: {ex.Message}");
-                return null;
+                Console.WriteLine($"GetVideosAsync Error: {ex.Message}");
+
+                return new List<VideoItem>();
             }
         }
+        #endregion
 
-        public async Task<List<Models.Article>> GetTeamArticles(string TeamName)
-        {
-
-            try
-            {
-                var furl = $"https://www.filgoal.com/search/filter?keyword={TeamName}";
-                var frequest = new HttpRequestMessage(HttpMethod.Get, furl);
-                frequest.Headers.Add("referer", "https://www.google.com/");
-                frequest.Headers.Add("user-agent",
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36");
-                var fresponse = await _httpClient.SendAsync(frequest);
-                fresponse.EnsureSuccessStatusCode();
-                var fhtml = await fresponse.Content.ReadAsStringAsync();
-                var fdoc = new HtmlDocument();
-                fdoc.LoadHtml(fhtml);
-                var matchNodesfeature = fdoc.DocumentNode.SelectNodes("//main//li");
-                var articles = new List<Article>();
-                foreach (var matchNode in matchNodesfeature)
-                {
-                    var fmatchDoc = new HtmlDocument();
-                    fmatchDoc.LoadHtml(matchNode.InnerHtml);
-                    articles.Add(new Article()
-                    {
-                        Title = fmatchDoc.DocumentNode.SelectSingleNode("//h6")?.InnerText.Trim(),
-
-                        Url = fmatchDoc.DocumentNode.SelectSingleNode("//a")?.GetAttributeValue("href", null),
-                        imageUrl = fmatchDoc.DocumentNode.SelectSingleNode("//img")?.GetAttributeValue("data-src", null) is string h ? "https:" + h : null,
-
-                    });
-
-                }
-                return articles;
-
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error in GetArticlesAsync: {ex.Message}");
-                return null;
-            }
-        }
     }
 }

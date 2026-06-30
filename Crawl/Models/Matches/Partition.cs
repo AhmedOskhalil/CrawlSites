@@ -1,4 +1,4 @@
-﻿namespace Crawl.Models
+﻿namespace Crawl.Models.Matches
 {
     public class Partition
     {

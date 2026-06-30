@@ -309,7 +309,7 @@ padding:40px 25px;">
     [Parameter]
     public string ArticleUrl { get; set; } = "";
 
-    public Models.ArticleContent articleContent { get; set; } = new();
+    public Models.Articles.ArticleContent articleContent { get; set; } = new();
 
     protected override async Task OnParametersSetAsync()
     {

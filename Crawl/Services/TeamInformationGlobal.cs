@@ -1,4 +1,4 @@
-﻿using Crawl.Models;
+﻿using Crawl.Models.Matches;
 
 namespace Crawl.Services
 {

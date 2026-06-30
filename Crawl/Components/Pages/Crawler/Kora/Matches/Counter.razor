@@ -2,6 +2,7 @@
 
 @using System.Text.RegularExpressions;
 @using Crawl.Components.Pages
+@using Crawl.Models.Matches
 @using Crawl.Services.Crawl
 @using Services
 @rendermode InteractiveServer
@@ -242,7 +243,7 @@ padding:35px;">
 @code {
 
     [Parameter]
-    public List<Models.Partition> Partitiones { get; set; } = new();
+    public List<Partition> Partitiones { get; set; } = new();
 
     string todaydate = DateTime.Now.ToString("yyyy-MM-dd");
     string tommorrowdate = DateTime.Now.AddDays(1).ToString("yyyy-MM-dd");

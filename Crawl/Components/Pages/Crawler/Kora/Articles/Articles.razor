@@ -1,10 +1,11 @@
-﻿@page "/team-article/{*ArticleUrl}"
+﻿@page "/articles"
 
-@using Crawl.Services.Crawl
 @using Crawl.Models
+@using Crawl.Models.Articles
+@using Crawl.Services.Crawl
 
 @inject CrawlService CrawlService
-@inject NavigationManager NavigationManager
+@inject NavigationManager NavigationContext
 
 <div style="
 min-height:100vh;
@@ -17,23 +18,32 @@ padding:40px 30px;">
 
         <!-- HEADER -->
         <div style="
-        margin-bottom:35px;">
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        margin-bottom:35px;
+        flex-wrap:wrap;
+        gap:20px;">
 
-            <h1 style="
-            color:white;
-            font-size:48px;
-            font-weight:900;
-            margin-bottom:10px;">
+            <div>
 
-                📰 أخبار الفريق
+                <h1 style="
+                color:white;
+                font-size:52px;
+                font-weight:900;
+                margin-bottom:10px;">
 
-            </h1>
+                    📰 آخر الأخبار
 
-            <div style="
-            color:#94a3b8;
-            font-size:18px;">
+                </h1>
 
-                ابحث عن أخبار الفريق وتحليلاته
+                <div style="
+                color:#94a3b8;
+                font-size:18px;">
+
+                    أحدث أخبار وتحليلات كرة القدم
+
+                </div>
 
             </div>
 
@@ -46,18 +56,20 @@ padding:40px 30px;">
         margin-bottom:40px;
         flex-wrap:wrap;">
 
-            <InputText @bind-Value="TeamName"
-                       style="
-                       flex:1;
-                       min-width:280px;
-                       background:#111827;
-                       border:1px solid #1e293b;
-                       color:white;
-                       padding:18px 20px;
-                       border-radius:18px;
-                       font-size:16px;" />
+            <input type="text"
+                   placeholder="ابحث عن الأخبار......"
+                   @bind="Keyword"
+                   style="
+                   flex:1;
+                   min-width:280px;
+                   background:#111827;
+                   border:1px solid #1e293b;
+                   color:white;
+                   padding:18px 20px;
+                   border-radius:18px;
+                   font-size:16px;" />
 
-            <button @onclick="@(() => Search())"
+            <button @onclick="Search"
                     style="
                     border:none;
                     background:linear-gradient(135deg,#2563eb,#1d4ed8);
@@ -118,7 +130,7 @@ padding:40px 30px;">
                                     border-radius:14px;
                                     font-weight:700;">
 
-                                إقرأ المزيد
+                                المزيد...
 
                             </button>
 
@@ -131,7 +143,7 @@ padding:40px 30px;">
         }
         else
         {
-            <Crawl.Components.Pages.Partials.Loading Text="جاري تحميل الأخبار"
+            <Crawl.Components.Pages.Partials.Loading Text="Loading Reports"
                                                      Visible="true" />
         }
 
@@ -143,25 +155,29 @@ padding:40px 30px;">
 
     public List<Article> articles { get; set; } = new();
 
-    private string TeamName { get; set; } = "Arsenal";
+    public string Keyword { get; set; } = "";
 
     protected override async Task OnInitializedAsync()
     {
-        articles = await CrawlService.GetTeamArticles(TeamName);
+        articles = await CrawlService.GetArticlesAsync();
     }
 
-    private async Task Search()
-    {
-        articles = await CrawlService.GetTeamArticles(TeamName);
-    }
-
-    private void GoToContent(string url)
+    private async Task GoToContent(string url)
     {
         if (string.IsNullOrEmpty(url)) return;
 
         var encodedUrl = Uri.EscapeDataString(url);
 
-        NavigationManager.NavigateTo($"/article-content/{encodedUrl}");
+        NavigationContext.NavigateTo($"/article-content/{encodedUrl}");
+    }
+
+    private async Task Search()
+    {
+        articles = string.IsNullOrWhiteSpace(Keyword)
+            ? await CrawlService.GetArticlesAsync()
+            : await CrawlService.GetTeamArticles(Keyword);
+
+        StateHasChanged();
     }
 
 }

@@ -1,4 +1,4 @@
-﻿namespace Crawl.Services
+﻿namespace Crawl.Models.Login
 {
     public class CurrentUser
     {
