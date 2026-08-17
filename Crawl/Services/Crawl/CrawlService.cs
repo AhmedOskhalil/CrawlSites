@@ -568,7 +568,36 @@ namespace Crawl.Services.Crawl
                 return new List<VideoItem>();
             }
         }
+
+        public async Task<string?> GetVideoUrlAsync(string videoUrl)
+        {
+            try
+            {
+                var html = await GetHtmlAsync(videoUrl);
+
+                var doc = LoadDocument(html);
+
+                var iframe = doc.DocumentNode
+                    .SelectSingleNode("//div[@class='v_object reel']//iframe");
+
+                if (iframe == null)
+                {
+                    var vidframe = doc.DocumentNode.SelectSingleNode("//div[@class=\"ytb-block\"]/iframe");
+                    if (vidframe != null)
+                        return vidframe.GetAttributeValue("src", null);
+                    return null;
+                }
+
+                return iframe.GetAttributeValue("src", null);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"GetVideoUrlAsync Error: {ex.Message}");
+                return null;
+            }
+        }
         #endregion
+
 
     }
 }

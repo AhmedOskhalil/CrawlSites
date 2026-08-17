@@ -4,73 +4,105 @@
 @using Models.Vidoes;
 @inject CrawlService CrawlService
 @inject NavigationManager Navigation
+@inject Services.Crawl.Video.VideoPlayerService VideoPlayerService
 
-
-<div style="
-min-height:100vh;
-background:#0f172a;
-padding:40px 30px;">
-
+@if (IsOpeningVideo)
+{
     <div style="
-    max-width:1600px;
-    margin:auto;">
-
-        <!-- HEADER -->
-        <div style="
+        position:fixed;
+        inset:0;
+        z-index:9999;
+        background:rgba(15,23,42,.85);
         display:flex;
-        justify-content:space-between;
         align-items:center;
-        margin-bottom:40px;
-        flex-wrap:wrap;
+        justify-content:center;
+        flex-direction:column;
         gap:20px;">
 
-            <div>
+        <div style="
+            width:55px;
+            height:55px;
+            border:5px solid rgba(255,255,255,.2);
+            border-top:5px solid #ef4444;
+            border-radius:50%;
+            animation:spin 1s linear infinite;">
+        </div>
 
-                <h1 style="
-                color:white;
-                font-size:58px;
-                font-weight:900;
-                margin-bottom:10px;">
+        <div style="
+            color:white;
+            font-size:20px;
+            font-weight:800;">
+            جاري تشغيل الفيديو...
+        </div>
+    </div>
+}
+else
+{
+    <div style="
+        min-height:100vh;
+        background:#0f172a;
+        padding:40px 30px;">
 
-                    🎥 الفيديوهات
+        <div style="
+            max-width:1600px;
+            margin:auto;">
 
-                </h1>
+            <!-- HEADER -->
+            <div style="
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                margin-bottom:40px;
+                flex-wrap:wrap;
+                gap:20px;">
 
-                <div style="
-                color:#94a3b8;
-                font-size:19px;">
+                <div>
 
-                    أهداف المباريات • ملخصات • لقطات خاصة
+                    <h1 style="
+                        color:white;
+                        font-size:58px;
+                        font-weight:900;
+                        margin-bottom:10px;">
+
+                        🎥 الفيديوهات
+
+                    </h1>
+
+                    <div style="
+                        color:#94a3b8;
+                        font-size:19px;">
+
+                        أهداف المباريات • ملخصات • لقطات خاصة
+
+                    </div>
 
                 </div>
 
             </div>
 
-        </div>
+            <!-- SEARCH -->
+            <div style="
+                display:flex;
+                gap:14px;
+                margin-bottom:45px;
+                flex-wrap:wrap;">
 
-        <!-- SEARCH -->
-        <div style="
-        display:flex;
-        gap:14px;
-        margin-bottom:45px;
-        flex-wrap:wrap;">
+                <input type="text"
+                       placeholder="ابحث عن فيديو..."
+                       @bind="Keyword"
+                       style="
+                flex:1;
+                min-width:280px;
+                background:#111827;
+                border:1px solid #1e293b;
+                color:white;
+                padding:18px 22px;
+                border-radius:18px;
+                font-size:16px;
+                outline:none;" />
 
-            <input type="text"
-                   placeholder="ابحث عن فيديو..."
-                   @bind="Keyword"
-                   style="
-                   flex:1;
-                   min-width:280px;
-                   background:#111827;
-                   border:1px solid #1e293b;
-                   color:white;
-                   padding:18px 22px;
-                   border-radius:18px;
-                   font-size:16px;
-                   outline:none;" />
-
-            <button @onclick="Search"
-                    style="
+                <button @onclick="Search"
+                        style="
                     border:none;
                     background:linear-gradient(135deg,#dc2626,#ef4444);
                     color:white;
@@ -80,134 +112,139 @@ padding:40px 30px;">
                     font-size:15px;
                     box-shadow:0 10px 25px rgba(239,68,68,.3);">
 
-                🔍 بحث
+                    🔍 بحث
 
-            </button>
+                </button>
 
-        </div>
+            </div>
 
-        <!-- VIDEOS -->
-        @if (videos.Count > 0)
-        {
-            <div style="
+            <!-- VIDEOS -->
+            @if (videos.Count > 0)
+            {
+                <div style="
                     display:grid;
                     grid-template-columns:repeat(auto-fill,minmax(360px,1fr));
                     gap:28px;">
 
-                @foreach (var video in videos)
-                {
-                    <div @onclick="() => OpenVideo(video.Url)"
-                         style="
-                                         background:#111827;
-                                         border-radius:28px;
-                                         overflow:hidden;
-                                         cursor:pointer;
-                                         border:1px solid rgba(255,255,255,.06);
-                                         box-shadow:0 15px 35px rgba(0,0,0,.35);
-                                         transition:.25s;">
+                    @foreach (var video in videos)
+                    {
+                        <div @onclick="() => OpenVideo(video.Url)"
+                             style="
+                            background:#111827;
+                            border-radius:28px;
+                            overflow:hidden;
+                            cursor:pointer;
+                            border:1px solid rgba(255,255,255,.06);
+                            box-shadow:0 15px 35px rgba(0,0,0,.35);
+                            transition:.25s;">
 
-                        <!-- IMAGE -->
-                        <div style="
-                                        position:relative;">
-
-                            <img src="@video.Thumbnail"
-                                 style="
-                                                 width:100%;
-                                                 height:240px;
-                                                 object-fit:cover;" />
-
-                            <!-- PLAY -->
+                            <!-- IMAGE -->
                             <div style="
-                                            position:absolute;
-                                            inset:0;
-                                            display:flex;
-                                            align-items:center;
-                                            justify-content:center;">
+                                position:relative;">
 
+                                <img src="@video.Thumbnail"
+                                     style="
+                                width:100%;
+                                height:240px;
+                                object-fit:cover;" />
+
+                                <!-- PLAY -->
                                 <div style="
-                                                width:85px;
-                                                height:85px;
-                                                border-radius:50%;
-                                                background:rgba(220,38,38,.92);
-                                                display:flex;
-                                                align-items:center;
-                                                justify-content:center;
-                                                color:white;
-                                                font-size:36px;
-                                                box-shadow:0 10px 30px rgba(220,38,38,.45);">
+                                    position:absolute;
+                                    inset:0;
+                                    display:flex;
+                                    align-items:center;
+                                    justify-content:center;">
 
-                                    ▶
+                                    <div style="
+                                        width:85px;
+                                        height:85px;
+                                        border-radius:50%;
+                                        background:rgba(220,38,38,.92);
+                                        display:flex;
+                                        align-items:center;
+                                        justify-content:center;
+                                        color:white;
+                                        font-size:36px;
+                                        box-shadow:0 10px 30px rgba(220,38,38,.45);">
+
+                                        ▶
+
+                                    </div>
 
                                 </div>
 
                             </div>
 
-                        </div>
+                            <!-- CONTENT -->
+                            <div style="padding:24px;">
 
-                        <!-- CONTENT -->
-                        <div style="padding:24px;">
+                                <div style="
+                                    color:#94a3b8;
+                                    font-size:14px;
+                                    margin-bottom:12px;">
 
-                            <div style="
-                                            color:#94a3b8;
-                                            font-size:14px;
-                                            margin-bottom:12px;">
+                                    🕒 @video.PublishDate
 
-                                🕒 @video.PublishDate
+                                </div>
+
+                                <h3 style="
+                                    color:white;
+                                    font-size:22px;
+                                    line-height:1.6;
+                                    font-weight:800;
+                                    margin-bottom:20px;">
+
+                                    @video.Title
+
+                                </h3>
+
+                                <button style="
+                                    border:none;
+                                    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+                                    color:white;
+                                    padding:12px 20px;
+                                    border-radius:14px;
+                                    font-weight:800;
+                                    font-size:15px;">
+
+                                    مشاهدة الفيديو
+
+                                </button>
 
                             </div>
 
-                            <h3 style="
-                                            color:white;
-                                            font-size:22px;
-                                            line-height:1.6;
-                                            font-weight:800;
-                                            margin-bottom:20px;">
-
-                                @video.Title
-
-                            </h3>
-
-                            <button style="
-                                            border:none;
-                                            background:linear-gradient(135deg,#2563eb,#1d4ed8);
-                                            color:white;
-                                            padding:12px 20px;
-                                            border-radius:14px;
-                                            font-weight:800;
-                                            font-size:15px;">
-
-                                مشاهدة الفيديو
-
-                            </button>
-
                         </div>
+                    }
 
-                    </div>
-                }
-
-            </div>
-        }
-        else
-        {
-            <div style="
+                </div>
+            }
+            else
+            {
+                <div style="
                     margin-top:100px;
                     text-align:center;">
 
-                <Crawl.Components.Pages.Partials.Loading Text="جاري تحميل الفيديوهات"
-                                                         Visible="true" />
+                    <Crawl.Components.Pages.Partials.Loading Text="جاري تحميل الفيديوهات"
+                                                             Visible="true" />
 
-            </div>
-        }
+                </div>
+            }
+
+        </div>
 
     </div>
 
-</div>
+}
+
 
 @code {
 
     public List<VideoItem> videos { get; set; } = new();
 
     public string Keyword { get; set; } = "";
+
+    public bool IsOpeningVideo = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -232,12 +269,31 @@ padding:40px 30px;">
         StateHasChanged();
     }
 
-    private void OpenVideo(string url)
+    private async Task OpenVideo(string url)
     {
-        if (string.IsNullOrEmpty(url))
+        if (IsOpeningVideo || string.IsNullOrEmpty(url))
             return;
 
-        Navigation.NavigateTo($"https://www.filgoal.com{url}", true);
+        IsOpeningVideo = true;
+        StateHasChanged();
+
+        try
+        {
+            var videocontenturl = await CrawlService.GetVideoUrlAsync(
+                "https://www.filgoal.com" + url
+            );
+
+            if (string.IsNullOrWhiteSpace(videocontenturl))
+                return;
+
+            VideoPlayerService.SetVideo(videocontenturl);
+
+            Navigation.NavigateTo("/video-player");
+        }
+        finally
+        {
+            IsOpeningVideo = false;
+        }
     }
 
 }
