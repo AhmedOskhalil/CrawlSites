@@ -577,14 +577,12 @@ namespace Crawl.Services.Crawl
 
                 var doc = LoadDocument(html);
 
-                var iframe = doc.DocumentNode
-                    .SelectSingleNode("//div[@class='v_object reel']//iframe");
-
+                var iframe = doc.DocumentNode.SelectSingleNode("//div[@class='v_object reel']//iframe");
+                var vidframelink = doc.DocumentNode.SelectSingleNode("//div[@id=\"details_content\"]").InnerHtml.ToString().Split("<iframe src=")[1].Split(" ")[0];
                 if (iframe == null)
                 {
-                    var vidframe = doc.DocumentNode.SelectSingleNode("//div[@class=\"ytb-block\"]/iframe");
-                    if (vidframe != null)
-                        return vidframe.GetAttributeValue("src", null);
+                    if (!string.IsNullOrEmpty(vidframelink))
+                        return vidframelink.Replace("\"", "");
                     return null;
                 }
 
