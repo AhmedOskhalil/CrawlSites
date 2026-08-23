@@ -1,10 +1,7 @@
 ﻿@page "/team-article/{*ArticleUrl}"
-
-@using Crawl.Models
 @using Crawl.Models.Articles
-@using Crawl.Services.Crawl
-
-@inject CrawlService CrawlService
+@using Crawl.Services.Crawl.Articles
+@inject ArticlesCrawlService ArticleService
 @inject NavigationManager NavigationManager
 
 <div style="
@@ -148,12 +145,12 @@ padding:40px 30px;">
 
     protected override async Task OnInitializedAsync()
     {
-        articles = await CrawlService.GetTeamArticles(TeamName);
+        articles = await ArticleService.GetTeamArticles(TeamName);
     }
 
     private async Task Search()
     {
-        articles = await CrawlService.GetTeamArticles(TeamName);
+        articles = await ArticleService.GetTeamArticles(TeamName);
     }
 
     private void GoToContent(string url)

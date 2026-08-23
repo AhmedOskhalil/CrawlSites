@@ -1,8 +1,9 @@
 ﻿@page "/videos"
 @using Crawl.Models
 @using Crawl.Services.Crawl
+@using Crawl.Services.Crawl.Videos
 @using Models.Vidoes;
-@inject CrawlService CrawlService
+@inject VideoCrawlService VideoCrawlService
 @inject NavigationManager Navigation
 @inject Services.Crawl.Video.VideoPlayerService VideoPlayerService
 
@@ -248,14 +249,14 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        videos = await CrawlService.GetVideosAsync();
+        videos = await VideoCrawlService.GetVideosAsync();
     }
 
     private async Task Search()
     {
         if (string.IsNullOrWhiteSpace(Keyword))
         {
-            videos = await CrawlService.GetVideosAsync();
+            videos = await VideoCrawlService.GetVideosAsync();
         }
         else
         {
@@ -279,7 +280,7 @@ else
 
         try
         {
-            var videocontenturl = await CrawlService.GetVideoUrlAsync(
+            var videocontenturl = await VideoCrawlService.GetVideoUrlAsync(
                 "https://www.filgoal.com" + url
             );
 

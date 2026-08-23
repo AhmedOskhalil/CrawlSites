@@ -5,9 +5,12 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.Options;
-using Crawl.Services.Crawl;
 using Crawl.Models.Login;
 using Crawl.Services.Crawl.Video;
+using Crawl.Services.Crawl.Articles;
+using Crawl.Services.Crawl.Helpers;
+using Crawl.Services.Crawl.GeneralMatches;
+using Crawl.Services.Crawl.Videos;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -46,6 +49,9 @@ builder.Services.AddScoped<CustomAuthStateProvider>();
 builder.Services.AddSingleton<TeamInformationGlobal>();
 builder.Services.AddSingleton<CrawlService>();
 builder.Services.AddSingleton<VideoPlayerService>();
+builder.Services.AddSingleton<ArticlesCrawlService>();
+builder.Services.AddSingleton<CrawlHelpersService>();
+builder.Services.AddSingleton<VideoCrawlService>();
 
 builder.Services.AddAuthorization();
 builder.Services.AddCascadingAuthenticationState();

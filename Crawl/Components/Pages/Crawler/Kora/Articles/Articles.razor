@@ -1,10 +1,7 @@
 ﻿@page "/articles"
-
-@using Crawl.Models
 @using Crawl.Models.Articles
-@using Crawl.Services.Crawl
-
-@inject CrawlService CrawlService
+@using Crawl.Services.Crawl.Articles
+@inject ArticlesCrawlService ArticleService
 @inject NavigationManager NavigationContext
 
 <div style="
@@ -159,7 +156,7 @@ padding:40px 30px;">
 
     protected override async Task OnInitializedAsync()
     {
-        articles = await CrawlService.GetArticlesAsync();
+        articles = await ArticleService.GetArticlesAsync();
     }
 
     private async Task GoToContent(string url)
@@ -174,8 +171,8 @@ padding:40px 30px;">
     private async Task Search()
     {
         articles = string.IsNullOrWhiteSpace(Keyword)
-            ? await CrawlService.GetArticlesAsync()
-            : await CrawlService.GetTeamArticles(Keyword);
+            ? await ArticleService.GetArticlesAsync()
+            : await ArticleService.GetTeamArticles(Keyword);
 
         StateHasChanged();
     }
